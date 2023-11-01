@@ -23,13 +23,5 @@ PLOT_PARAMS = {
 }
 
 
-AGENT_NAMES = {
-    'egreedy': r'$\varepsilon$-greedy',
-    'exp3': 'EXP3',
-    'softmax': 'Softmax',
-    'ucb': 'UCB'
-}
-
-
 def set_style() -> None:
     plt.rcParams.update(PLOT_PARAMS)
