@@ -1,20 +1,31 @@
 import jax
 import jax.numpy as jnp
+import tensorflow_probability.substrates.jax as tfp
 from chex import Array, PRNGKey, Scalar
 
+tfd = tfp.distributions
 
-# LogDistance channel model
-# https://www.nsnam.org/docs/models/html/propagation.html#logdistancepropagationlossmodel
+
+# TGax channel model
+# https://www.ieee802.org/11/Reports/tgax_update.htm#:~:text=TGax%20Selection%20Procedure-,11%2D14%2D0980,-TGax%20Simulation%20Scenarios
 DEFAULT_TX_POWER = 16.0206  # (40 mW) https://www.nsnam.org/docs/release/3.40/doxygen/d0/d7d/wifi-phy_8cc_source.html#l00171
-REFERENCE_LOSS = 46.6777    # https://www.nsnam.org/docs/release/3.40/doxygen/d5/d74/propagation-loss-model_8cc_source.html#l00493
-REFERENCE_DISTANCE = 1.0    # https://www.nsnam.org/docs/release/3.40/doxygen/d5/d74/propagation-loss-model_8cc_source.html#l00488
-EXPONENT = 2.0              # https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=908165
 NOISE_FLOOR = -93.97        # https://www.nsnam.org/docs/models/html/wifi-testing.html#packet-error-rate-performance
 NOISE_FLOOR_LIN = jnp.power(10, NOISE_FLOOR / 10)
 DEFAULT_SIGMA = 2.          # https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=908165
+BREAKING_POINT = 10.        # https://mentor.ieee.org/802.11/dcn/14/11-14-0980-16-00ax-simulation-scenarios.docx (p. 19)
+CENTRAL_FREQUENCY = 5.160   # (GHz) https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/n/ac/ax)
+REFERENCE_DISTANCE = 1.0
+WALL_LOSS = 7.
 
 # Data rates for IEEE 802.11ax standard, 20 MHz channel width, 1 spatial stream, and 800 ns GI
 DATA_RATES = jnp.array([8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2])
+
+# Based on ns-3 static simulations with 1 station, ideal channel, and constant MCS
+AMPDU_SIZES = jnp.array([3, 6, 9, 12, 18, 25, 28, 31, 37, 41, 41, 41], dtype=jnp.float32)
+
+# Agent application interval.
+TAU = 5.484 * 1e-3  # (s) https://ieeexplore.ieee.org/document/8930559
+FRAME_LEN = jnp.asarray(1500 * 8)
 
 # Based on ns-3 simulations with LogDistance channel model
 MEAN_SNRS = jnp.array([
@@ -24,11 +35,46 @@ MEAN_SNRS = jnp.array([
 ])
 
 
-def network_throughput(key: PRNGKey, tx: Array, pos: Array, mcs: Array, tx_power: Array, sigma: Scalar) -> Scalar:
+def path_loss(distance: Array, walls: Array) -> Array:
+    return (40.05 + 20 * jnp.log10((jnp.minimum(distance, BREAKING_POINT) * CENTRAL_FREQUENCY) / 2.4) +
+            (distance > BREAKING_POINT) * 35 * jnp.log10(distance / BREAKING_POINT) + WALL_LOSS * walls)
+
+
+def _logsumexp_db(a: Array, b: Array) -> Array:
+    r"""
+    Computes :ref:`jax.nn.logsumexp` for dB i.e. :math:`10log_10(\sum_i b_i 10^{a_i/10})`
+
+    This function is equivalent to
+
+    .. code-block:: python
+
+        interference_lin = jnp.power(10, a / 10)
+        interference_lin = (b * interference_lin).sum()
+        interference = 10 * jnp.log10(interference_lin )
+
+
+    Parameters
+    ----------
+    a: Array
+        Parameters are the same as for :ref:`jax.nn.logsumexp`
+    b: Array
+        Parameters are the same as for :ref:`jax.nn.logsumexp`
+
+    Returns
+    -------
+    Array
+        `logsumexp` for dB
     """
-    Calculates the approximate network throughput based on the nodes' positions, MCS, and tx power.
-    Channel is modeled using log-distance path loss model with additive white Gaussian noise. Network
-    throughput is calculated as the sum of data rates of all successful transmissions. Success of
+
+    LOG10DIV10 = jnp.log(10.) / 10.
+    return jax.nn.logsumexp(a=LOG10DIV10 * a, b=b) / LOG10DIV10
+
+
+def network_data_rate(key: PRNGKey, tx: Array, pos: Array, mcs: Array, tx_power: Array, sigma: Scalar, walls: Array) -> Scalar:
+    """
+    Calculates the aggregated effective data rate based on the nodes' positions, MCS, and tx power.
+    Channel is modeled using log-distance path loss model with additive white Gaussian noise. Effective
+    data rate is calculated as the sum of data rates of all successful transmissions. Success of
     a transmission is  Bernoulli random variable with success probability depending on the SINR. SINR is
     calculated as the difference between the signal power and the interference level which is calculated
     as the sum of the signal powers of all interfering nodes and the noise floor. **Attention:** This
@@ -49,31 +95,35 @@ def network_throughput(key: PRNGKey, tx: Array, pos: Array, mcs: Array, tx_power
         Transmission power of the nodes. Each entry corresponds to a node.
     sigma: Scalar
         Standard deviation of the additive white Gaussian noise.
+    walls: Array
+        Adjacency matrix of walls. Each entry corresponds to a node.
 
     Returns
     -------
     Scalar
-        Approximated network throughput in Mb/s.
+        Aggregated effective data rate in Mb/s.
     """
+
+    normal_key, binomial_key = jax.random.split(key)
 
     distance = jnp.sqrt(jnp.sum((pos[:, None, :] - pos[None, ...]) ** 2, axis=-1))
     distance = jnp.clip(distance, REFERENCE_DISTANCE, None)
 
-    path_loss = REFERENCE_LOSS + 10 * EXPONENT * jnp.log10(distance)
-    signal_power = tx_power - path_loss
+    signal_power = tx_power - path_loss(distance, walls)
     signal_power = jnp.where(jnp.isinf(signal_power), 0., signal_power)
 
     interference_matrix = jnp.ones_like(tx) * tx.sum(axis=0) * tx.sum(axis=-1, keepdims=True) * (1 - tx)
-    interference_lin = jnp.power(10, signal_power / 10)
-    interference_lin = (interference_matrix * interference_lin).sum(axis=0)
-    interference = 10 * jnp.log10(interference_lin + NOISE_FLOOR_LIN)
+    a = jnp.concatenate([signal_power, jnp.full((1, signal_power.shape[1]), fill_value=NOISE_FLOOR)], axis=0)
+    b = jnp.concatenate([interference_matrix, jnp.ones((1, interference_matrix.shape[1]))], axis=0)
+    interference = jax.vmap(_logsumexp_db, in_axes=(1, 1))(a, b)
 
     sinr = signal_power - interference
-    sinr = sinr + sigma * jax.random.normal(key, shape=path_loss.shape)
+    sinr = sinr + tfd.Normal(loc=jnp.zeros_like(signal_power), scale=sigma).sample(seed=normal_key)
     sinr = (sinr * tx).sum(axis=0)
 
-    success_probability = jax.scipy.stats.norm.cdf(sinr, loc=MEAN_SNRS[mcs], scale=2.)
-    frame_transmitted = jax.random.bernoulli(key, success_probability * (sinr > 0))
-    expected_data_rate = DATA_RATES[mcs] * frame_transmitted
+    success_probability = tfd.Normal(loc=MEAN_SNRS[mcs], scale=2.).cdf(sinr) * (sinr > 0)
+    n = jnp.round(DATA_RATES[mcs] * 1e6 * TAU / FRAME_LEN)
+    frames_transmitted = tfd.Binomial(total_count=n, probs=success_probability).sample(seed=binomial_key)
 
-    return expected_data_rate.sum()
+    average_data_rate = FRAME_LEN * (frames_transmitted / TAU)
+    return average_data_rate.sum() / float(1e6)  # (Mbps)

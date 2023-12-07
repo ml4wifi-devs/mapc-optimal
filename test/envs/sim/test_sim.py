@@ -4,7 +4,8 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
-from ml4wifi.envs.sim import DEFAULT_TX_POWER, DEFAULT_SIGMA, network_throughput
+from ml4wifi.envs.sim import DEFAULT_TX_POWER, DEFAULT_SIGMA, network_data_rate
+from ml4wifi.envs.sim import _logsumexp_db
 
 
 class SimTestCase(unittest.TestCase):
@@ -61,17 +62,20 @@ class SimTestCase(unittest.TestCase):
         # Standard deviation of the additive white Gaussian noise
         sigma = DEFAULT_SIGMA
 
+        # Set walls to zero
+        walls = jnp.zeros((pos.shape[0], pos.shape[0]))
+
         # JAX random number generator key
         key = jax.random.PRNGKey(42)
 
         # Simulate the network for 150 steps
-        thr1, thr2, thr3 = [], [], []
+        data_rate_1, data_rate_2, data_rate_3 = [], [], []
 
         for _ in range(150):
             key, k1, k2, k3 = jax.random.split(key, 4)
-            thr1.append(network_throughput(k1, tx1, pos, mcs, tx_power, sigma))
-            thr2.append(network_throughput(k2, tx2, pos, mcs, tx_power, sigma))
-            thr3.append(network_throughput(k3, tx3, pos, mcs, tx_power, sigma))
+            data_rate_1.append(jax.jit(network_data_rate)(k1, tx1, pos, mcs, tx_power, sigma, walls))
+            data_rate_2.append(jax.jit(network_data_rate)(k2, tx2, pos, mcs, tx_power, sigma, walls))
+            data_rate_3.append(jax.jit(network_data_rate)(k3, tx3, pos, mcs, tx_power, sigma, walls))
 
         # Plot the positions of the nodes
         plt.figure(figsize=(7.5, 4.5))
@@ -90,17 +94,46 @@ class SimTestCase(unittest.TestCase):
         plt.savefig('scenario_loc.pdf', bbox_inches='tight')
         plt.clf()
 
-        # Plot the approximate throughput
-        plt.plot(thr1, label='STA 1 -> AP A')
-        plt.plot(thr2, label='STA 2 -> AP A and STA 3 -> AP B')
-        plt.plot(thr3, label='STA 1 -> AP A and STA 4 -> AP B')
+        # Plot the effective data rate
+        plt.plot(data_rate_1, label='STA 1 -> AP A')
+        plt.plot(data_rate_2, label='STA 2 -> AP A and STA 3 -> AP B')
+        plt.plot(data_rate_3, label='STA 1 -> AP A and STA 4 -> AP B')
         plt.xlim(0, 150)
-        plt.ylim(0, 100)
+        #plt.ylim(0, 100)
         plt.xlabel('Timestep')
-        plt.ylabel('Approximated throughput [Mb/s]')
+        plt.ylabel('Effective data rate [Mb/s]')
         plt.title('Simulation of MAPC')
         plt.legend()
         plt.grid()
         plt.tight_layout()
-        plt.savefig('scenario_thr.pdf', bbox_inches='tight')
+        plt.savefig('scenario_rate.pdf', bbox_inches='tight')
         plt.clf()
+
+    def test_logsumexp(self):
+        NOISE_FLOOR = -93.97
+        NOISE_FLOOR_LIN = jnp.power(10, NOISE_FLOOR / 10)
+
+        key = jax.random.key(42)
+        signal_power = 15 * jax.random.normal(key, (10, 10)) - 70.
+
+        tx = jnp.zeros((10, 10))
+        tx = tx.at[3, 5].set(1)
+        tx = tx.at[4, 1].set(1)
+        tx = tx.at[0, 2].set(1)
+
+        interference_matrix = jnp.ones_like(tx) * tx.sum(axis=0) * tx.sum(
+            axis=-1, keepdims=True) * (1 - tx)
+        interference_lin = jnp.power(10, signal_power / 10)
+        interference_lin = (interference_matrix * interference_lin).sum(axis=0)
+        interference_original = 10 * jnp.log10(
+            interference_lin + NOISE_FLOOR_LIN)
+
+        a = jnp.concatenate([signal_power, jnp.full((1, signal_power.shape[1]),
+                                                    fill_value=NOISE_FLOOR)],
+                            axis=0)
+        b = jnp.concatenate(
+            [interference_matrix, jnp.ones((1, interference_matrix.shape[1]))],
+            axis=0)
+        interference_new = jax.vmap(_logsumexp_db, in_axes=(1, 1))(a, b)
+
+        self.assertTrue(jnp.allclose(interference_original, interference_new))
