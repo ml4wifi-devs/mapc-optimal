@@ -20,9 +20,6 @@ WALL_LOSS = 7.
 # Data rates for IEEE 802.11ax standard, 20 MHz channel width, 1 spatial stream, and 800 ns GI
 DATA_RATES = jnp.array([8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2])
 
-# Based on ns-3 static simulations with 1 station, ideal channel, and constant MCS
-AMPDU_SIZES = jnp.array([3, 6, 9, 12, 18, 25, 28, 31, 37, 41, 41, 41], dtype=jnp.float32)
-
 # Agent application interval.
 TAU = 5.484 * 1e-3  # (s) https://ieeexplore.ieee.org/document/8930559
 FRAME_LEN = jnp.asarray(1500 * 8)
