@@ -5,9 +5,9 @@ from typing import List
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ml4wifi.envs.sim import DATA_RATES, TAU
 from ml4wifi.plots.config import get_cmap
 from ml4wifi.plots.utils import confidence_interval
+from ml4wifi.wifi import TAU, DATA_RATES
 
 
 def plot(names: List, data_rate: List, scenario_config: dict) -> None:

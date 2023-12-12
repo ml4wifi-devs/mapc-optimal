@@ -3,7 +3,7 @@ import jax.random
 from chex import Scalar
 
 from ml4wifi.envs.scenarios import StaticScenario
-from ml4wifi.envs.sim import DEFAULT_TX_POWER, DEFAULT_SIGMA
+from ml4wifi.wifi import DEFAULT_TX_POWER, DEFAULT_SIGMA
 
 DEFAULT_MCS = 11
 
