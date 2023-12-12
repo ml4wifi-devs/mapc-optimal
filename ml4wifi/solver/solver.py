@@ -35,8 +35,8 @@ class Solver:
             mcs_values=list(range(mcs_values)),
             mcs_data_rates=mcs_data_rates,
             min_snr=dbm_to_lin(min_snr),
-            max_tx_power=dbm_to_lin(max_tx_power),
-            noise_floor=dbm_to_lin(noise_floor),
+            max_tx_power=dbm_to_lin(max_tx_power).item(),
+            noise_floor=dbm_to_lin(noise_floor).item(),
             opt_sum=opt_sum
         )
 
@@ -110,7 +110,7 @@ class Solver:
 
             for ap in self.access_points:
                 if path_loss[ap, sta] < best_pl:
-                    best_pl = path_loss[ap, sta]
+                    best_pl = path_loss[ap, sta].item()
                     best_ap = ap
 
             graph.add_edge(f'AP_{best_ap}', f'STA_{sta}', path_loss=best_pl)
@@ -126,6 +126,7 @@ class Solver:
         }
 
     def __call__(self, path_loss: np.ndarray) -> dict:
+        path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 
         configuration = self._initial_compatible_sets(
