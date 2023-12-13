@@ -15,4 +15,6 @@ class SolverTestCase(unittest.TestCase):
         path_loss = positions_to_path_loss(s.pos, s.walls)
 
         solver = Solver(sta, ap)
-        solver(path_loss)
+        result, rate = solver(path_loss)
+
+        ...

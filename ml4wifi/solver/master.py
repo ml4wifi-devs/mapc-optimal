@@ -1,3 +1,5 @@
+from numpy.typing import ArrayLike
+
 import pulp as plp
 
 
@@ -12,12 +14,12 @@ class Master:
 
     def __call__(
             self,
-            stations: list,
+            stations: ArrayLike,
             link_node_b: dict,
-            conf_links: list,
+            conf_links: dict,
             conf_link_rates: dict,
             conf_total_rates: dict,
-            confs: list
+            confs: ArrayLike
     ) -> tuple:
 
         # Definition of the master model
@@ -57,7 +59,7 @@ class Master:
             master += min_throughput, 'min_throughput_g'
 
         # To access the variables from outside
-        master.tx_set_weight = conf_weight
+        master.conf_weight = conf_weight
 
         # Solve the master problem
         master.solve()
@@ -71,7 +73,7 @@ class Master:
             'alpha': master.constraints['conf_weight_c'].pi,
             'beta': {s: master.constraints[f'node_throughput_{s}_c'].pi for s in stations},
             'gamma': {s: master.constraints[f'worst_throughput_{s}_c'].pi for s in stations},
-            'shares': {c: master.tx_set_weight[c].varValue for c in confs}
+            'shares': {c: master.conf_weight[c].varValue for c in confs}
         }
 
         return result, plp.value(master.objective)
