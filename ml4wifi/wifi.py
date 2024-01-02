@@ -24,11 +24,12 @@ DATA_RATES = jnp.array([8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 11
 
 MAX_TX_POWER = 20.  # (dBm)
 
-# Agent application interval.
-TAU = 5.484 * 1e-3  # (s) https://ieeexplore.ieee.org/document/8930559
+# Tx slot duration
+TAU = 5.484 * 1e-3          # (s) https://ieeexplore.ieee.org/document/8930559
 FRAME_LEN = jnp.asarray(1500 * 8)
 
-# Based on ns-3 simulations with LogDistance channel model
+# Parameters of the success probability curves - mean of the normal distribution with standard deviation of 2
+# (derived from ns-3 simulations)
 MEAN_SNRS = jnp.array([
     10.613624240405125, 10.647249582547907, 10.660723984151614, 10.682584060100158,
     11.151267538857537, 15.413200906170632, 16.735812667249125, 18.091175930406580,

@@ -26,7 +26,7 @@ class Pricing:
         self.opt_sum = opt_sum
 
     def _best_rate(self, path_loss: float) -> float:
-        snr = self.default_tx_power - path_loss - self.noise_floor
+        snr = self.default_tx_power / path_loss / self.noise_floor
         mcs = (snr >= self.min_snr).sum()
 
         if mcs == 0:
@@ -68,7 +68,7 @@ class Pricing:
                 configuration['conf_link_rates'][c, l] = self._best_rate(link_path_loss[l])
 
         # link tx power for compatible sets
-        configuration['conf_station_tx_power'] = {
+        configuration['conf_link_tx_power'] = {
             (c, l): self.default_tx_power for c in configuration['confs'] for l in configuration['conf_links'][c]
         }
 
@@ -97,14 +97,11 @@ class Pricing:
         pricing = plp.LpProblem('pricing', plp.LpMaximize)
 
         # Variables:
-        # which station is on (binary)
-        station_on = plp.LpVariable.dicts('station_on', stations, cat=plp.LpBinary)
-
-        # transmission power of a station
-        station_tx_power = plp.LpVariable.dicts('station_tx_power', stations, lowBound=0, cat=plp.LpContinuous)
-
         # which link is on (binary)
         link_on = plp.LpVariable.dicts('link_on', links, cat=plp.LpBinary)
+
+        # transmission power used by AP
+        link_tx_power = plp.LpVariable.dicts('link_tx_power', links, lowBound=0, cat=plp.LpContinuous)
 
         # MCS mode used in link (binary)
         link_mcs = plp.LpVariable.dicts('link_mcs', [(l, m) for l in links for m in self.mcs_values], cat=plp.LpBinary)
@@ -116,21 +113,21 @@ class Pricing:
         link_sinr = plp.LpVariable.dicts('link_sinr', links, lowBound=0, cat=plp.LpContinuous)
 
         # noise influence of one transmitting station to another
-        interference = plp.LpVariable.dicts('interference', [(l, s) for l in links for s in stations], lowBound=0, cat=plp.LpContinuous)
+        interference = plp.LpVariable.dicts('interference', [(l, i) for l in links for i in links], lowBound=0, cat=plp.LpContinuous)
 
         # Constraints:
         for s in stations:
-            # station receives transmission (on one of its links) if this station is on
-            pricing += plp.lpSum(link_on[l] for l in links if link_node_b[l] == s) == station_on[s], f'station_on_{s}_c'
-
-            # if station is on, then node can transmit with its maximum power (but, less is also possible)
-            pricing += self.max_tx_power * station_on[s] >= station_tx_power[s], f'station_tx_power_{s}_c'
+            # station receives transmission from at most one AP
+            pricing += plp.lpSum(link_on[l] for l in links if link_node_b[l] == s) <= 1, f'station_on_{s}_c'
 
         for a in access_points:
             # AP can simultaneously transmit to at most one station on all of its links
             pricing += plp.lpSum(link_on[l] for l in links if link_node_a[l] == a) <= 1, f'ap_on_{a}_c'
 
         for l in links:
+            # if link is on, then node can transmit with its maximum power (but, less is also possible)
+            pricing += self.max_tx_power * link_on[l] >= link_tx_power[l], f'link_tx_power_{l}_c'
+
             # the way transmission modes are switched on in link (incremental switching-on)
             for m in self.mcs_values:
                 if m == 0:
@@ -139,16 +136,14 @@ class Pricing:
                     pricing += link_mcs[l, m] <= link_mcs[l, m - 1], f'link_mcs_{l}_{m}_c'
 
             # interference from other concurrent transmissions
-            for s in stations:
-                if s != link_node_b[l]:
-                    pricing += interference[l, s] >= station_tx_power[s] - link_path_loss[link_node_a[l], s], f'interference_{l}_{s}_c'
+            for i in links:
+                if i != l:
+                    int_pair = (link_node_a[i], link_node_b[l])
+                    pricing += interference[l, i] >= link_tx_power[i] / link_path_loss[int_pair], f'interference_{l}_{i}_c'
 
             # SINR in link
             pricing += link_sinr[l] >= (
-                    station_tx_power[link_node_b[l]]
-                    - link_path_loss[l]
-                    - plp.lpSum(interference[l, s] for s in stations if s != link_node_b[l])
-                    - self.noise_floor
+                link_tx_power[l] / link_path_loss[l] / (plp.lpSum(interference[l, i] for i in links if i != l) + self.noise_floor)
             ), f'link_sinr_{l}_c'
 
             # MCS selection in link (on the basis of the SINR)
@@ -171,10 +166,9 @@ class Pricing:
             ), 'tx_set_throughput_g'
 
         # To access the variables from outside:
-        pricing.station_on = station_on
-        pricing.station_tx_power = station_tx_power
         pricing.link_on = link_on
         pricing.link_data_rate = link_data_rate
+        pricing.link_tx_power = link_tx_power
 
         # Solve the pricing problem
         pricing.solve()
@@ -190,10 +184,10 @@ class Pricing:
         # links used in the new compatible set
         configuration['conf_links'][conf_num] = [e for e in links if pricing.link_on[e].varValue == 1]
 
-        # transmission power for the stations in the new compatible set
-        for s in stations:
-            if pricing.station_on[s].varValue == 1:
-                configuration['conf_station_tx_power'][conf_num, s] = pricing.station_tx_power[s].varValue
+        # transmission power for the new compatible set
+        for l in links:
+            if pricing.link_on[l].varValue == 1:
+                configuration['conf_link_tx_power'][conf_num, l] = pricing.link_tx_power[l].varValue
 
         # link rates for the new compatible set
         for l in links:

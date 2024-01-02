@@ -63,7 +63,7 @@ class Solver:
                     best_pl = path_loss[ap, sta].item()
                     best_ap = ap
 
-            graph.add_edge(f'AP_{best_ap}', f'STA_{sta}', path_loss=best_pl)
+            graph.add_edge(f'AP_{best_ap}', f'STA_{sta}')
 
         return {
             'graph': graph,
@@ -122,10 +122,10 @@ class Solver:
             iteration += 1
 
         result = {
-            'station_tx_power': {cs: lin_to_dbm(p).item() for cs, p in configuration['conf_station_tx_power'].items()},
             'links': configuration['conf_links'],
             'link_rates': configuration['conf_link_rates'],
             'total_rates': configuration['conf_total_rates'],
+            'tx_power': {cs: lin_to_dbm(p).item() for cs, p in configuration['conf_link_tx_power'].items()},
             'shares': master_result['shares']
         }
 

@@ -41,12 +41,13 @@ def _logsumexp_db(a: Array, b: Array) -> Array:
 def network_data_rate(key: PRNGKey, tx: Array, pos: Array, mcs: Array, tx_power: Array, sigma: Scalar, walls: Array) -> Scalar:
     """
     Calculates the aggregated effective data rate based on the nodes' positions, MCS, and tx power.
-    Channel is modeled using log-distance path loss model with additive white Gaussian noise. Effective
+    Channel is modeled using TGax channel model with additive white Gaussian noise. Effective
     data rate is calculated as the sum of data rates of all successful transmissions. Success of
-    a transmission is  Bernoulli random variable with success probability depending on the SINR. SINR is
-    calculated as the difference between the signal power and the interference level which is calculated
-    as the sum of the signal powers of all interfering nodes and the noise floor. **Attention:** This
-    simulation does not support multiple simultaneous transmissions to the same node.
+    a transmission is a Binomial random variable with success probability depending on the SINR and
+    number of trials equal to the number of frames in the slot. SINR is calculated as the difference
+    between the signal power and the interference level. Interference level is calculated as the sum
+    of the signal powers of all interfering nodes and the noise floor in the linear scale. **Attention:**
+    This simulation does not support multiple simultaneous transmissions to the same node.
 
     Parameters
     ----------
