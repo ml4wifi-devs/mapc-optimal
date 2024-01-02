@@ -1,4 +1,4 @@
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 import networkx as nx
 import pulp as plp
@@ -7,9 +7,9 @@ import pulp as plp
 class Pricing:
     def __init__(
             self,
-            mcs_values: ArrayLike,
-            mcs_data_rates: ArrayLike,
-            min_snr: ArrayLike,
+            mcs_values: NDArray,
+            mcs_data_rates: NDArray,
+            min_snr: NDArray,
             default_tx_power: float,
             max_tx_power: float,
             noise_floor: float,
@@ -18,8 +18,8 @@ class Pricing:
         self.mcs_values = mcs_values
         self.mcs_data_rates = mcs_data_rates
         self.min_snr = min_snr
-        self.min_snr_diff = {m: min_snr[0] if m == 0 else (min_snr[m] - min_snr[m - 1]) for m in mcs_values}
-        self.mcs_rate_diff = {m: mcs_data_rates[0] if m == 0 else (mcs_data_rates[m] - mcs_data_rates[m - 1]) for m in mcs_values}
+        self.min_snr_diff = {m: min_snr[0].item() if m == 0 else (min_snr[m] - min_snr[m - 1]).item() for m in mcs_values}
+        self.mcs_rate_diff = {m: mcs_data_rates[0].item() if m == 0 else (mcs_data_rates[m] - mcs_data_rates[m - 1]).item() for m in mcs_values}
         self.default_tx_power = default_tx_power
         self.max_tx_power = max_tx_power
         self.noise_floor = noise_floor
@@ -32,13 +32,12 @@ class Pricing:
         if mcs == 0:
             return 0.
 
-        data_rate = self.mcs_data_rates[mcs - 1]
-        return data_rate if isinstance(data_rate, float) else data_rate.item()
+        return self.mcs_data_rates[mcs - 1].item()
 
     def initial_configuration(
             self,
-            stations: ArrayLike,
-            links: ArrayLike,
+            stations: NDArray,
+            links: NDArray,
             link_path_loss: dict,
             graph: nx.DiGraph
     ) -> dict:
@@ -84,9 +83,9 @@ class Pricing:
             dual_alpha: float,
             dual_beta: dict,
             dual_gamma: dict,
-            stations: ArrayLike,
-            access_points: ArrayLike,
-            links: ArrayLike,
+            stations: NDArray,
+            access_points: NDArray,
+            links: NDArray,
             link_node_a: dict,
             link_node_b: dict,
             link_path_loss: dict,
@@ -100,7 +99,7 @@ class Pricing:
         # which link is on (binary)
         link_on = plp.LpVariable.dicts('link_on', links, cat=plp.LpBinary)
 
-        # transmission power used by AP
+        # transmission power used in link
         link_tx_power = plp.LpVariable.dicts('link_tx_power', links, lowBound=0, cat=plp.LpContinuous)
 
         # MCS mode used in link (binary)
@@ -109,11 +108,8 @@ class Pricing:
         # data rate obtained in link
         link_data_rate = plp.LpVariable.dicts('link_data_rate', links, lowBound=0, cat=plp.LpContinuous)
 
-        # signal to interference plus noise ratio (SINR) in link
-        link_sinr = plp.LpVariable.dicts('link_sinr', links, lowBound=0, cat=plp.LpContinuous)
-
-        # noise influence of one transmitting station to another
-        interference = plp.LpVariable.dicts('interference', [(l, i) for l in links for i in links], lowBound=0, cat=plp.LpContinuous)
+        # helper variable: q[l, m] = tx_power[l] * link_mcs[l, m]
+        q = plp.LpVariable.dicts('q', [(a, l, m) for a in access_points for l in links for m in self.mcs_values], lowBound=0, cat=plp.LpContinuous)
 
         # Constraints:
         for s in stations:
@@ -125,6 +121,8 @@ class Pricing:
             pricing += plp.lpSum(link_on[l] for l in links if link_node_a[l] == a) <= 1, f'ap_on_{a}_c'
 
         for l in links:
+            a, s = link_node_a[l], link_node_b[l]
+
             # if link is on, then node can transmit with its maximum power (but, less is also possible)
             pricing += self.max_tx_power * link_on[l] >= link_tx_power[l], f'link_tx_power_{l}_c'
 
@@ -135,19 +133,16 @@ class Pricing:
                 else:
                     pricing += link_mcs[l, m] <= link_mcs[l, m - 1], f'link_mcs_{l}_{m}_c'
 
-            # interference from other concurrent transmissions
-            for i in links:
-                if i != l:
-                    int_pair = (link_node_a[i], link_node_b[l])
-                    pricing += interference[l, i] >= link_tx_power[i] / link_path_loss[int_pair], f'interference_{l}_{i}_c'
+                # minimum SINR required for transmission in link with MCS mode m
+                min_sinr = sum(self.min_snr_diff[k] for k in self.mcs_values if k <= m)
 
-            # SINR in link
-            pricing += link_sinr[l] >= (
-                link_tx_power[l] / link_path_loss[l] / (plp.lpSum(interference[l, i] for i in links if i != l) + self.noise_floor)
-            ), f'link_sinr_{l}_c'
-
-            # MCS selection in link (on the basis of the SINR)
-            pricing += link_sinr[l] >= plp.lpSum(self.min_snr_diff[m] * link_mcs[l, m] for m in self.mcs_values), f'link_mcs_{l}_c'
+                # calculation of SINR in link using the helper variable q
+                pricing += q[a, l, m] <= self.max_tx_power * link_mcs[l, m], f'q_{l}_{m}_c1'
+                pricing += q[a, l, m] <= link_tx_power[l], f'q_{l}_{m}_c2'
+                pricing += q[a, l, m] >= link_tx_power[l] - self.max_tx_power * (1 - link_mcs[l, m]), f'q_{l}_{m}_c3'
+                pricing += 1 / (link_path_loss[l] * min_sinr) * q[a, l, m] >= (
+                    plp.lpSum(1 / link_path_loss[i, s] * q[i, l, m] for i in access_points if i != a) + self.noise_floor * link_mcs[l, m]
+                ), f'q_{l}_{m}_c4'
 
             # data rate obtained in link (on the basis of the switched-on MCS modes)
             pricing += link_data_rate[l] == plp.lpSum(self.mcs_rate_diff[m] * link_mcs[l, m] for m in self.mcs_values), f'link_data_rate_{l}_c'

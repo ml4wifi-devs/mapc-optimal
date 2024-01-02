@@ -1,4 +1,4 @@
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 import pulp as plp
 
@@ -14,12 +14,12 @@ class Master:
 
     def __call__(
             self,
-            stations: ArrayLike,
+            stations: NDArray,
             link_node_b: dict,
             conf_links: dict,
             conf_link_rates: dict,
             conf_total_rates: dict,
-            confs: ArrayLike
+            confs: NDArray
     ) -> tuple:
 
         # Definition of the master model

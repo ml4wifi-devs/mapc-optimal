@@ -2,7 +2,7 @@ from itertools import product
 
 import networkx as nx
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 from ml4wifi.solver.master import Master
 from ml4wifi.solver.pricing import Pricing
@@ -16,8 +16,8 @@ class Solver:
             stations: list,
             access_points: list,
             mcs_values: int = len(DATA_RATES),
-            mcs_data_rates: ArrayLike = DATA_RATES,
-            min_snr: ArrayLike = MEAN_SNRS,
+            mcs_data_rates: NDArray = DATA_RATES,
+            min_snr: NDArray = MEAN_SNRS,
             default_tx_power: float = DEFAULT_TX_POWER,
             max_tx_power: float = MAX_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
@@ -45,7 +45,7 @@ class Solver:
             opt_sum=opt_sum
         )
 
-    def _generate_data(self, path_loss: np.ndarray) -> dict:
+    def _generate_data(self, path_loss: NDArray) -> dict:
         graph = nx.DiGraph()
 
         for s in self.stations:
@@ -75,7 +75,7 @@ class Solver:
             'link_path_loss': {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
         }
 
-    def __call__(self, path_loss: np.ndarray) -> tuple:
+    def __call__(self, path_loss: NDArray) -> tuple:
         path_loss = dbm_to_lin(path_loss) * (1 - jnp.eye(path_loss.shape[0]))
         problem_data = self._generate_data(path_loss)
 

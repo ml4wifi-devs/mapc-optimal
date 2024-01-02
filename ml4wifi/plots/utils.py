@@ -1,10 +1,11 @@
 from typing import Tuple
 
 import numpy as np
+from numpy.typing import NDArray
 from scipy.stats import t, ttest_ind
 
 
-def confidence_interval(data: np.ndarray, ci: float = 0.99) -> Tuple:
+def confidence_interval(data: NDArray, ci: float = 0.99) -> Tuple:
     measurements = data.shape[0]
     mean = data.mean(axis=0)
     std = data.std(axis=0)
@@ -18,7 +19,7 @@ def confidence_interval(data: np.ndarray, ci: float = 0.99) -> Tuple:
     return mean, ci_low, ci_high
 
 
-def ttest(data: np.ndarray) -> np.ndarray:
+def ttest(data: NDArray) -> NDArray:
     n = data.shape[0]
     results = np.zeros((n, n))
 
