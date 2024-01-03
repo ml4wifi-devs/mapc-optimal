@@ -23,6 +23,7 @@ def path_loss(distance: Array, walls: Array) -> Array:
 DATA_RATES = jnp.array([8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2])
 
 MAX_TX_POWER = 20.  # (dBm)
+MIN_TX_POWER = 0.   # (dBm)
 
 # Tx slot duration
 TAU = 5.484 * 1e-3          # (s) https://ieeexplore.ieee.org/document/8930559

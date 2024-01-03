@@ -1,7 +1,6 @@
 from itertools import product
 
 import networkx as nx
-import numpy as np
 from numpy.typing import NDArray
 
 from ml4wifi.solver.master import Master
@@ -20,6 +19,7 @@ class Solver:
             min_snr: NDArray = MEAN_SNRS,
             default_tx_power: float = DEFAULT_TX_POWER,
             max_tx_power: float = MAX_TX_POWER,
+            min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
             min_throughput: float = 0.,
             opt_sum: bool = False,
@@ -38,9 +38,10 @@ class Solver:
         self.pricing = Pricing(
             mcs_values=range(mcs_values),
             mcs_data_rates=mcs_data_rates,
-            min_snr=dbm_to_lin(min_snr),
+            min_sinr=dbm_to_lin(min_snr),
             default_tx_power=dbm_to_lin(default_tx_power).item(),
             max_tx_power=dbm_to_lin(max_tx_power).item(),
+            min_tx_power=dbm_to_lin(min_tx_power).item(),
             noise_floor=dbm_to_lin(noise_floor).item(),
             opt_sum=opt_sum
         )
@@ -54,16 +55,16 @@ class Solver:
         for a in self.access_points:
             graph.add_node(f'AP_{a}', type='AP')
 
-        for sta in self.stations:
-            best_pl = np.inf
+        for s in self.stations:
+            best_pl = float('inf')
             best_ap = None
 
-            for ap in self.access_points:
-                if path_loss[ap, sta] < best_pl:
-                    best_pl = path_loss[ap, sta].item()
-                    best_ap = ap
+            for a in self.access_points:
+                if path_loss[a, s] < best_pl:
+                    best_pl = path_loss[a, s].item()
+                    best_ap = a
 
-            graph.add_edge(f'AP_{best_ap}', f'STA_{sta}')
+            graph.add_edge(f'AP_{best_ap}', f'STA_{s}')
 
         return {
             'graph': graph,
@@ -76,19 +77,19 @@ class Solver:
         }
 
     def __call__(self, path_loss: NDArray) -> tuple:
-        path_loss = dbm_to_lin(path_loss) * (1 - jnp.eye(path_loss.shape[0]))
+        path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 
         configuration = self.pricing.initial_configuration(
             stations=problem_data['stations'],
-            links=problem_data['links'],
+            link_node_a=problem_data['link_node_a'],
             link_path_loss=problem_data['link_path_loss'],
             graph=problem_data['graph']
         )
 
         iteration = 0
-        master_goal_best = -np.inf
-        pricing_goal_best = -np.inf
+        master_goal_best = -float('inf')
+        pricing_goal_best = -float('inf')
 
         while iteration < self.max_iterations:
             master_result, master_goal = self.master(
@@ -125,7 +126,7 @@ class Solver:
             'links': configuration['conf_links'],
             'link_rates': configuration['conf_link_rates'],
             'total_rates': configuration['conf_total_rates'],
-            'tx_power': {cs: lin_to_dbm(p).item() for cs, p in configuration['conf_link_tx_power'].items()},
+            'tx_power': {c: {a: lin_to_dbm(p).item() for a, p in tx_power.items()} for c, tx_power in configuration['conf_ap_tx_power'].items()},
             'shares': master_result['shares']
         }
 

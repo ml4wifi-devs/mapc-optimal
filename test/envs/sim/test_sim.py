@@ -54,7 +54,7 @@ class SimTestCase(unittest.TestCase):
         ])
 
         # Modulation and coding scheme of the nodes (here, all nodes use MCS 4)
-        mcs = jnp.ones(n_nodes, dtype=jnp.int32) * 4
+        mcs = jnp.ones(n_nodes, dtype=int) * 4
 
         # Transmission power of the nodes (all nodes use the default transmission power)
         tx_power = jnp.ones(n_nodes) * DEFAULT_TX_POWER

@@ -9,25 +9,26 @@ class Pricing:
             self,
             mcs_values: NDArray,
             mcs_data_rates: NDArray,
-            min_snr: NDArray,
+            min_sinr: NDArray,
             default_tx_power: float,
             max_tx_power: float,
+            min_tx_power: float,
             noise_floor: float,
             opt_sum: bool
     ) -> None:
         self.mcs_values = mcs_values
         self.mcs_data_rates = mcs_data_rates
-        self.min_snr = min_snr
-        self.min_snr_diff = {m: min_snr[0].item() if m == 0 else (min_snr[m] - min_snr[m - 1]).item() for m in mcs_values}
+        self.min_sinr = min_sinr
         self.mcs_rate_diff = {m: mcs_data_rates[0].item() if m == 0 else (mcs_data_rates[m] - mcs_data_rates[m - 1]).item() for m in mcs_values}
         self.default_tx_power = default_tx_power
         self.max_tx_power = max_tx_power
+        self.min_tx_power = min_tx_power
         self.noise_floor = noise_floor
         self.opt_sum = opt_sum
 
     def _best_rate(self, path_loss: float) -> float:
         snr = self.default_tx_power / path_loss / self.noise_floor
-        mcs = (snr >= self.min_snr).sum()
+        mcs = (snr >= self.min_sinr).sum()
 
         if mcs == 0:
             return 0.
@@ -37,7 +38,7 @@ class Pricing:
     def initial_configuration(
             self,
             stations: NDArray,
-            links: NDArray,
+            link_node_a: dict,
             link_path_loss: dict,
             graph: nx.DiGraph
     ) -> dict:
@@ -60,21 +61,20 @@ class Pricing:
             configuration['conf_links'][i] = [sta_link[0]]
 
         # link rates for compatible sets
-        configuration['conf_link_rates'] = {(c, l): 0. for c in configuration['confs'] for l in links}
+        configuration['conf_link_rates'] = {c: {} for c in configuration['confs']}
 
         for c in configuration['confs']:
             for l in configuration['conf_links'][c]:
-                configuration['conf_link_rates'][c, l] = self._best_rate(link_path_loss[l])
-
-        # link tx power for compatible sets
-        configuration['conf_link_tx_power'] = {
-            (c, l): self.default_tx_power for c in configuration['confs'] for l in configuration['conf_links'][c]
-        }
+                configuration['conf_link_rates'][c][l] = self._best_rate(link_path_loss[l])
 
         # total rates for compatible sets
-        configuration['conf_total_rates'] = {
-            c: sum(configuration['conf_link_rates'][c, l] for l in links) for c in configuration['confs']
-        }
+        configuration['conf_total_rates'] = {c: sum(configuration['conf_link_rates'][c].values()) for c in configuration['confs']}
+
+        # tx power for compatible sets
+        configuration['conf_ap_tx_power'] = {c: {} for c in configuration['confs']}
+
+        for c in configuration['confs']:
+            configuration['conf_ap_tx_power'][c] = {link_node_a[l]: self.default_tx_power for l in configuration['conf_links'][c]}
 
         return configuration
 
@@ -96,11 +96,11 @@ class Pricing:
         pricing = plp.LpProblem('pricing', plp.LpMaximize)
 
         # Variables:
+        # transmission power used by AP
+        ap_tx_power = plp.LpVariable.dicts('ap_tx_power', access_points, lowBound=0, cat=plp.LpContinuous)
+
         # which link is on (binary)
         link_on = plp.LpVariable.dicts('link_on', links, cat=plp.LpBinary)
-
-        # transmission power used in link
-        link_tx_power = plp.LpVariable.dicts('link_tx_power', links, lowBound=0, cat=plp.LpContinuous)
 
         # MCS mode used in link (binary)
         link_mcs = plp.LpVariable.dicts('link_mcs', [(l, m) for l in links for m in self.mcs_values], cat=plp.LpBinary)
@@ -108,7 +108,7 @@ class Pricing:
         # data rate obtained in link
         link_data_rate = plp.LpVariable.dicts('link_data_rate', links, lowBound=0, cat=plp.LpContinuous)
 
-        # helper variable: q[l, m] = tx_power[l] * link_mcs[l, m]
+        # helper variable: q[a, l, m] = ap_tx_power[a] * link_mcs[l, m]
         q = plp.LpVariable.dicts('q', [(a, l, m) for a in access_points for l in links for m in self.mcs_values], lowBound=0, cat=plp.LpContinuous)
 
         # Constraints:
@@ -123,8 +123,9 @@ class Pricing:
         for l in links:
             a, s = link_node_a[l], link_node_b[l]
 
-            # if link is on, then node can transmit with its maximum power (but, less is also possible)
-            pricing += self.max_tx_power * link_on[l] >= link_tx_power[l], f'link_tx_power_{l}_c'
+            # if link is on, then node can transmit with power constrained by min/max power
+            pricing += ap_tx_power[a] <= self.max_tx_power * link_on[l], f'ap_tx_power_max_{l}_c'
+            pricing += ap_tx_power[a] >= self.min_tx_power * link_on[l], f'ap_tx_power_min_{l}_c'
 
             # the way transmission modes are switched on in link (incremental switching-on)
             for m in self.mcs_values:
@@ -133,14 +134,11 @@ class Pricing:
                 else:
                     pricing += link_mcs[l, m] <= link_mcs[l, m - 1], f'link_mcs_{l}_{m}_c'
 
-                # minimum SINR required for transmission in link with MCS mode m
-                min_sinr = sum(self.min_snr_diff[k] for k in self.mcs_values if k <= m)
-
                 # calculation of SINR in link using the helper variable q
                 pricing += q[a, l, m] <= self.max_tx_power * link_mcs[l, m], f'q_{l}_{m}_c1'
-                pricing += q[a, l, m] <= link_tx_power[l], f'q_{l}_{m}_c2'
-                pricing += q[a, l, m] >= link_tx_power[l] - self.max_tx_power * (1 - link_mcs[l, m]), f'q_{l}_{m}_c3'
-                pricing += 1 / (link_path_loss[l] * min_sinr) * q[a, l, m] >= (
+                pricing += q[a, l, m] <= ap_tx_power[a], f'q_{l}_{m}_c2'
+                pricing += q[a, l, m] >= ap_tx_power[a] - self.max_tx_power * (1 - link_mcs[l, m]), f'q_{l}_{m}_c3'
+                pricing += 1 / (link_path_loss[l] * self.min_sinr[m]) * q[a, l, m] >= (
                     plp.lpSum(1 / link_path_loss[i, s] * q[i, l, m] for i in access_points if i != a) + self.noise_floor * link_mcs[l, m]
                 ), f'q_{l}_{m}_c4'
 
@@ -150,20 +148,20 @@ class Pricing:
         # Goal for the pricing problem
         if self.opt_sum:
             pricing += (
-                plp.lpSum(link_data_rate[e] for e in links)
+                plp.lpSum(link_data_rate[l] for l in links)
                 - dual_alpha
-                + plp.lpSum(dual_beta[v] * link_data_rate[e] for v in stations for e in links if link_node_b[e] == v)
+                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
         else:
             pricing += (
                 - dual_alpha
-                + plp.lpSum(dual_beta[v] * link_data_rate[e] for v in stations for e in links if link_node_b[e] == v)
+                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
 
         # To access the variables from outside:
         pricing.link_on = link_on
         pricing.link_data_rate = link_data_rate
-        pricing.link_tx_power = link_tx_power
+        pricing.ap_tx_power = ap_tx_power
 
         # Solve the pricing problem
         pricing.solve()
@@ -180,19 +178,22 @@ class Pricing:
         configuration['conf_links'][conf_num] = [e for e in links if pricing.link_on[e].varValue == 1]
 
         # transmission power for the new compatible set
+        configuration['conf_ap_tx_power'][conf_num] = {}
+
         for l in links:
             if pricing.link_on[l].varValue == 1:
-                configuration['conf_link_tx_power'][conf_num, l] = pricing.link_tx_power[l].varValue
+                a = link_node_a[l]
+                configuration['conf_ap_tx_power'][conf_num][a] = pricing.ap_tx_power[a].varValue
 
         # link rates for the new compatible set
+        configuration['conf_link_rates'][conf_num] = {}
+
         for l in links:
             if pricing.link_on[l].varValue == 1:
-                configuration['conf_link_rates'][conf_num, l] = pricing.link_data_rate[l].varValue
-            else:
-                configuration['conf_link_rates'][conf_num, l] = 0.
+                configuration['conf_link_rates'][conf_num][l] = pricing.link_data_rate[l].varValue
 
         # total rates for compatible sets
-        configuration['conf_total_rates'][conf_num] = sum(configuration['conf_link_rates'][conf_num, l] for l in links)
+        configuration['conf_total_rates'][conf_num] = sum(configuration['conf_link_rates'][conf_num].values())
 
         # and for the next interation...
         configuration['conf_num'] += 1

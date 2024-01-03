@@ -170,7 +170,7 @@ class StaticScenario(Scenario):
         super().__init__(associations, walls, walls_pos)
 
         self.pos = pos
-        self.mcs = jnp.ones(pos.shape[0], dtype=jnp.int32) * mcs
+        self.mcs = jnp.ones(pos.shape[0], dtype=int) * mcs
         self.tx_power = jnp.ones(pos.shape[0]) * tx_power
 
         self.data_rate_fn = jax.jit(partial(

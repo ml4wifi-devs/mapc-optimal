@@ -42,7 +42,7 @@ class Master:
         for s in stations:
             # calculation of the summarized throughput of each station (over all the used configurations)
             master += node_throughput[s] == plp.lpSum(
-                conf_link_rates[c, l] * conf_weight[c] for c in confs for l in conf_links[c] if link_node_b[l] == s
+                conf_link_rates[c][l] * conf_weight[c] for c in confs for l in conf_links[c] if link_node_b[l] == s
             ), f'node_throughput_{s}_c'  # dual: beta
 
             # calculation of the worst throughput (this constraint is especially necessary for not-opt_sum)
