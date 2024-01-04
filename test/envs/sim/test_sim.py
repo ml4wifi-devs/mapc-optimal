@@ -4,8 +4,8 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
-from ml4wifi.envs.sim import _logsumexp_db, network_data_rate
-from ml4wifi.wifi import *
+from mapc_optimal.envs.sim import _logsumexp_db, network_data_rate
+from mapc_optimal.wifi import *
 
 
 class SimTestCase(unittest.TestCase):

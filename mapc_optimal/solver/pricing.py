@@ -175,7 +175,7 @@ class Pricing:
         configuration['confs'] = range(1, conf_num + 1)
 
         # links used in the new compatible set
-        configuration['conf_links'][conf_num] = [e for e in links if pricing.link_on[e].varValue == 1]
+        configuration['conf_links'][conf_num] = [l for l in links if pricing.link_on[l].varValue == 1]
 
         # transmission power for the new compatible set
         configuration['conf_ap_tx_power'][conf_num] = {}

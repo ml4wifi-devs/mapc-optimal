@@ -3,10 +3,10 @@ from itertools import product
 import networkx as nx
 from numpy.typing import NDArray
 
-from ml4wifi.solver.master import Master
-from ml4wifi.solver.pricing import Pricing
-from ml4wifi.solver.utils import dbm_to_lin, lin_to_dbm
-from ml4wifi.wifi import *
+from mapc_optimal.solver.master import Master
+from mapc_optimal.solver.pricing import Pricing
+from mapc_optimal.solver.utils import dbm_to_lin, lin_to_dbm
+from mapc_optimal.wifi import *
 
 
 class Solver:

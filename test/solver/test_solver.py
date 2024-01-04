@@ -1,8 +1,8 @@
 import unittest
 
-from ml4wifi.envs.scenarios.static import simple_scenario_5
-from ml4wifi.solver import Solver
-from ml4wifi.solver.utils import positions_to_path_loss
+from mapc_optimal.envs.scenarios.static import simple_scenario_5
+from mapc_optimal.solver import Solver
+from mapc_optimal.solver.utils import positions_to_path_loss
 
 
 class SolverTestCase(unittest.TestCase):

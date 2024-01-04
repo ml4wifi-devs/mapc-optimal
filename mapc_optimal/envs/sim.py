@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import tensorflow_probability.substrates.jax as tfp
 from chex import Array, PRNGKey, Scalar
 
-from ml4wifi.wifi import *
+from mapc_optimal.wifi import *
 
 tfd = tfp.distributions
 

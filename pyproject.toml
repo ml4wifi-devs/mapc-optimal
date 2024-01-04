@@ -1,5 +1,5 @@
 [project]
-name = "ml4wifi"
+name = "mapc_optimal"
 version = "0.1.0"
 description = " Optimal solution of the MAPC (c-SR) problem for IEEE 802.11 networks "
 

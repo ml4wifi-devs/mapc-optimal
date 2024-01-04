@@ -2,8 +2,8 @@ import jax.numpy as jnp
 import jax.random
 from chex import Scalar
 
-from ml4wifi.envs.scenarios import StaticScenario
-from ml4wifi.wifi import DEFAULT_TX_POWER, DEFAULT_SIGMA
+from mapc_optimal.envs.scenarios import StaticScenario
+from mapc_optimal.wifi import DEFAULT_TX_POWER, DEFAULT_SIGMA
 
 DEFAULT_MCS = 11
 

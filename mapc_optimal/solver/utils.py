@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import tensorflow_probability.substrates.jax as tfp
 from chex import Array, Numeric
 
-from ml4wifi.wifi import REFERENCE_DISTANCE, path_loss
+from mapc_optimal.wifi import REFERENCE_DISTANCE, path_loss
 
 tfd = tfp.distributions
 
