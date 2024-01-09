@@ -4,8 +4,9 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
-from mapc_optimal.envs.sim import _logsumexp_db, network_data_rate
-from mapc_optimal.wifi import *
+from mapc_sim.sim import network_data_rate
+from mapc_sim.utils import logsumexp_db
+from mapc_sim.constants import *
 
 
 class SimTestCase(unittest.TestCase):
@@ -134,6 +135,6 @@ class SimTestCase(unittest.TestCase):
         b = jnp.concatenate(
             [interference_matrix, jnp.ones((1, interference_matrix.shape[1]))],
             axis=0)
-        interference_new = jax.vmap(_logsumexp_db, in_axes=(1, 1))(a, b)
+        interference_new = jax.vmap(logsumexp_db, in_axes=(1, 1))(a, b)
 
         self.assertTrue(jnp.allclose(interference_original, interference_new))

@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from mapc_optimal.solver.master import Master
 from mapc_optimal.solver.pricing import Pricing
 from mapc_optimal.solver.utils import dbm_to_lin, lin_to_dbm
-from mapc_optimal.wifi import *
+from mapc_sim.constants import *
 
 
 class Solver:

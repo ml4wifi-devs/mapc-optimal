@@ -3,7 +3,8 @@ import jax.numpy as jnp
 import tensorflow_probability.substrates.jax as tfp
 from chex import Array, Numeric
 
-from mapc_optimal.wifi import REFERENCE_DISTANCE, path_loss
+from mapc_sim.constants import REFERENCE_DISTANCE
+from mapc_sim.utils import tgax_path_loss as path_loss
 
 tfd = tfp.distributions
 
