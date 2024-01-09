@@ -1,6 +1,6 @@
 import unittest
 
-from mapc_optimal.envs.scenarios.static import simple_scenario_5
+from mapc_optimal.envs.static_scenarios import simple_scenario_5
 from mapc_optimal.solver import Solver
 from mapc_optimal.solver.utils import positions_to_path_loss
 

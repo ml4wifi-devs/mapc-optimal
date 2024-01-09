@@ -4,7 +4,7 @@ import unittest
 import jax
 import matplotlib.pyplot as plt
 
-from mapc_optimal.envs.scenarios.static import *
+from mapc_optimal.envs.static_scenarios import *
 
 
 class ScenarioClassTestCase(unittest.TestCase):

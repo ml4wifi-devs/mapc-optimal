@@ -1,12 +1,74 @@
-import jax.numpy as jnp
-import jax.random
-from chex import Scalar
-from mapc_sim.constants import DEFAULT_TX_POWER, DEFAULT_SIGMA
+from functools import partial
+from typing import Dict, Optional
 
-from mapc_optimal.envs.scenarios import StaticScenario
+import jax
+import jax.numpy as jnp
+from chex import Array, Scalar, PRNGKey
+from mapc_sim.constants import DEFAULT_TX_POWER, DEFAULT_SIGMA
+from mapc_sim.sim import network_data_rate
+
+from mapc_optimal.envs.scenario import Scenario
 
 
 DEFAULT_MCS = 11
+
+
+class StaticScenario(Scenario):
+    """
+    Static scenario with fixed node positions, MCS, tx power, and noise standard deviation.
+    The configuration of parallel transmissions is variable.
+
+    Parameters
+    ----------
+    pos: Array
+        Two dimensional array of node positions. Each row corresponds to X and Y coordinates of a node.
+    mcs: int
+        Modulation and coding scheme of the nodes. Each entry corresponds to a node.
+    tx_power: Scalar
+        Transmission power of the nodes. Each entry corresponds to a node.
+    sigma: Scalar
+        Standard deviation of the additive white Gaussian noise.
+    associations: Dict
+        Dictionary of associations between access points and stations.
+    walls: Optional[Array]
+        Adjacency matrix of walls. Each entry corresponds to a node.
+    walls_pos: Optional[Array]
+        Two dimensional array of wall positions. Each row corresponds to X and Y coordinates of a wall.
+    """
+
+    def __init__(
+            self,
+            pos: Array,
+            mcs: int,
+            tx_power: Scalar,
+            sigma: Scalar,
+            associations: Dict,
+            walls: Optional[Array] = None,
+            walls_pos: Optional[Array] = None
+    ) -> None:
+        super().__init__(associations, walls, walls_pos)
+
+        self.pos = pos
+        self.mcs = jnp.ones(pos.shape[0], dtype=jnp.int32) * mcs
+        self.tx_power = jnp.ones(pos.shape[0]) * tx_power
+
+        self.data_rate_fn = jax.jit(partial(
+            network_data_rate,
+            pos=self.pos,
+            mcs=self.mcs,
+            tx_power=self.tx_power,
+            sigma=sigma,
+            walls=self.walls
+        ))
+
+    def __call__(self, key: PRNGKey, tx: Array) -> Scalar:
+        return self.data_rate_fn(key, tx)
+
+    def plot(self, filename: str = None) -> None:
+        super().plot(self.pos, filename)
+
+    def is_cca_single_tx(self) -> bool:
+        return super().is_cca_single_tx(self.pos, self.tx_power)
 
 
 def simple_scenario_1(
@@ -25,7 +87,7 @@ def simple_scenario_1(
         [2 * d, 0.],  # STA 2
         [3 * d, 0.],  # STA 3
         [4 * d, 0.],  # AP B
-        [5 * d, 0.]  # STA 4
+        [5 * d, 0.]   # STA 4
     ])
 
     associations = {
@@ -96,12 +158,12 @@ def simple_scenario_3(
     """
 
     pos = jnp.array([
-        [d, 0],  # AP A
-        [d, d],  # STA 1
-        [0, 0],  # STA 2
+        [d, 0],      # AP A
+        [d, d],      # STA 1
+        [0, 0],      # STA 2
         [5 * d, 0],  # AP B
         [3 * d, 0],  # STA 3
-        [6 * d, 0]  # STA 4
+        [6 * d, 0]   # STA 4
     ])
 
     associations = {
