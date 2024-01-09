@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 COLUMN_WIDTH = 3.5
 COLUMN_HIGHT = 2 * COLUMN_WIDTH / (1 + 5 ** 0.5)
 

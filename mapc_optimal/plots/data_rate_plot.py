@@ -4,10 +4,10 @@ from typing import List
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mapc_sim.constants import TAU, DATA_RATES
 
 from mapc_optimal.plots.config import get_cmap
 from mapc_optimal.plots.utils import confidence_interval
-from mapc_optimal.wifi import TAU, DATA_RATES
 
 
 def plot(names: List, data_rate: List, scenario_config: dict) -> None:

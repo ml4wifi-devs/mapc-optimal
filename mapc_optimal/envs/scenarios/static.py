@@ -1,9 +1,10 @@
 import jax.numpy as jnp
 import jax.random
 from chex import Scalar
+from mapc_sim.constants import DEFAULT_TX_POWER, DEFAULT_SIGMA
 
 from mapc_optimal.envs.scenarios import StaticScenario
-from mapc_optimal.wifi import DEFAULT_TX_POWER, DEFAULT_SIGMA
+
 
 DEFAULT_MCS = 11
 

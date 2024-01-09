@@ -2,11 +2,11 @@ from itertools import product
 
 import networkx as nx
 from numpy.typing import NDArray
+from mapc_sim.constants import *
 
 from mapc_optimal.solver.master import Master
 from mapc_optimal.solver.pricing import Pricing
 from mapc_optimal.solver.utils import dbm_to_lin, lin_to_dbm
-from mapc_optimal.wifi import *
 
 
 class Solver:
