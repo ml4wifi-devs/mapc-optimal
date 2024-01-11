@@ -135,11 +135,14 @@ class Pricing:
                     pricing += link_mcs[l, m] <= link_mcs[l, m - 1], f'link_mcs_{l}_{m}_c'
 
                 # calculation of SINR in link using the helper variable q
-                pricing += q[a, l, m] <= self.max_tx_power * link_mcs[l, m], f'q_{l}_{m}_c1'
-                pricing += q[a, l, m] <= ap_tx_power[a], f'q_{l}_{m}_c2'
-                pricing += q[a, l, m] >= ap_tx_power[a] - self.max_tx_power * (1 - link_mcs[l, m]), f'q_{l}_{m}_c3'
-                pricing += 1 / (link_path_loss[l] * self.min_sinr[m]) * q[a, l, m] >= (
-                    plp.lpSum(1 / link_path_loss[i, s] * q[i, l, m] for i in access_points if i != a) + self.noise_floor * link_mcs[l, m]
+                for i in access_points:
+                    pricing += q[i, l, m] <= self.max_tx_power * link_mcs[l, m], f'q_{i}_{l}_{m}_c1'
+                    pricing += q[i, l, m] <= ap_tx_power[i], f'q_{i}_{l}_{m}_c2'
+                    pricing += q[i, l, m] >= ap_tx_power[i] - self.max_tx_power * (1 - link_mcs[l, m]), f'q_{i}_{l}_{m}_c3'
+
+                pricing += 1 / self.min_sinr[m] * q[a, l, m] >= (
+                    plp.lpSum(link_path_loss[l] / link_path_loss[i, s] * q[i, l, m] for i in access_points if i != a)
+                    + link_path_loss[l] * self.noise_floor * link_mcs[l, m]
                 ), f'q_{l}_{m}_c4'
 
             # data rate obtained in link (on the basis of the switched-on MCS modes)

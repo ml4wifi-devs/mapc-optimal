@@ -28,7 +28,6 @@ class Solver:
         self.stations = stations
         self.access_points = access_points
         self.mcs_data_rates = mcs_data_rates
-        self.min_snr_dbm = min_snr
         self.max_iterations = max_iterations
 
         self.master = Master(
