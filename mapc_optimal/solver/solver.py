@@ -125,7 +125,7 @@ class Solver:
             'links': configuration['conf_links'],
             'link_rates': configuration['conf_link_rates'],
             'total_rates': configuration['conf_total_rates'],
-            'tx_power': {c: {a: lin_to_dbm(p).item() for a, p in tx_power.items()} for c, tx_power in configuration['conf_ap_tx_power'].items()},
+            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in tx_power.items()} for c, tx_power in configuration['conf_link_tx_power'].items()},
             'shares': master_result['shares']
         }
 
