@@ -27,18 +27,12 @@ class Pricing:
         self.opt_sum = opt_sum
 
     def _best_rate(self, path_loss: float) -> float:
-        snr = self.default_tx_power / path_loss / self.noise_floor
-        mcs = (snr >= self.min_sinr).sum()
-
-        if mcs == 0:
-            return 0.
-
+        mcs = (self.max_tx_power >= self.min_sinr * path_loss * self.noise_floor).sum()
         return self.mcs_data_rates[mcs - 1].item()
 
     def initial_configuration(
             self,
             stations: NDArray,
-            link_node_a: dict,
             link_path_loss: dict,
             graph: nx.DiGraph
     ) -> dict:
@@ -74,7 +68,7 @@ class Pricing:
         configuration['conf_link_tx_power'] = {c: {} for c in configuration['confs']}
 
         for c in configuration['confs']:
-            configuration['conf_link_tx_power'][c] = {l: self.default_tx_power for l in configuration['conf_links'][c]}
+            configuration['conf_link_tx_power'][c] = {l: self.max_tx_power for l in configuration['conf_links'][c]}
 
         return configuration
 

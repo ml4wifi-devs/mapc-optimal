@@ -29,6 +29,9 @@ class Solver:
         self.access_points = access_points
         self.mcs_data_rates = mcs_data_rates
         self.max_iterations = max_iterations
+        self.min_sinr = dbm_to_lin(min_snr)
+        self.max_tx_power = dbm_to_lin(max_tx_power).item()
+        self.noise_floor = dbm_to_lin(noise_floor).item()
 
         self.master = Master(
             min_throughput=min_throughput,
@@ -45,14 +48,11 @@ class Solver:
             opt_sum=opt_sum
         )
 
+    def _tx_possible(self, path_loss: float) -> bool:
+        return self.max_tx_power >= self.min_sinr[0] * path_loss * self.noise_floor
+
     def _generate_data(self, path_loss: NDArray) -> dict:
         graph = nx.DiGraph()
-
-        for s in self.stations:
-            graph.add_node(f'STA_{s}', type='STA')
-
-        for a in self.access_points:
-            graph.add_node(f'AP_{a}', type='AP')
 
         for s in self.stations:
             best_pl = float('inf')
@@ -63,12 +63,13 @@ class Solver:
                     best_pl = path_loss[a, s].item()
                     best_ap = a
 
-            graph.add_edge(f'AP_{best_ap}', f'STA_{s}')
+            if self._tx_possible(best_pl):
+                graph.add_edge(f'AP_{best_ap}', f'STA_{s}')
 
         return {
             'graph': graph,
-            'stations': [v for v in graph.nodes if graph.nodes[v]['type'] == 'STA'],
-            'access_points': [v for v in graph.nodes if graph.nodes[v]['type'] == 'AP'],
+            'stations': [v for v in graph.nodes if 'STA' in v],
+            'access_points': [v for v in graph.nodes if 'AP' in v],
             'links': list(graph.edges),
             'link_node_a': {e: e[0] for e in graph.edges},  # APs
             'link_node_b': {e: e[1] for e in graph.edges},  # STAs
@@ -79,9 +80,11 @@ class Solver:
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 
+        if len(problem_data['links']) == 0:
+            return {}, 0.
+
         configuration = self.pricing.initial_configuration(
             stations=problem_data['stations'],
-            link_node_a=problem_data['link_node_a'],
             link_path_loss=problem_data['link_path_loss'],
             graph=problem_data['graph']
         )
