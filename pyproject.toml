@@ -1,7 +1,7 @@
 [project]
 name = "mapc_optimal"
 version = "0.1.0"
-description = " Optimal solution of the MAPC (c-SR) problem for IEEE 802.11 networks "
+description = "Optimal solution of the MAPC (c-SR) problem for IEEE 802.11 networks"
 
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -18,12 +18,9 @@ authors = [
 
 requires-python = ">=3.9"
 dependencies = [
-  "chex~=0.1.85",
-  "jax~=0.4.23",
-  "jaxlib~=0.4.23",
   "mapc-sim~=0.1.1",
-  "matplotlib~=3.8.2",
   "networkx~=3.2.1",
+  "numpy~=1.26.0",
   "pulp~=2.7.0"
 ]
 
