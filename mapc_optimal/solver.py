@@ -1,12 +1,12 @@
 from itertools import product
 
 import networkx as nx
-from numpy.typing import NDArray
+import numpy as np
 from mapc_sim.constants import *
 
-from mapc_optimal.solver.master import Master
-from mapc_optimal.solver.pricing import Pricing
-from mapc_optimal.solver.utils import dbm_to_lin, lin_to_dbm
+from mapc_optimal.master import Master
+from mapc_optimal.pricing import Pricing
+from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
 
 
 class Solver:
@@ -15,8 +15,8 @@ class Solver:
             stations: list,
             access_points: list,
             mcs_values: int = len(DATA_RATES),
-            mcs_data_rates: NDArray = DATA_RATES,
-            min_snr: NDArray = MEAN_SNRS,
+            mcs_data_rates: list = DATA_RATES,
+            min_snr: list = MEAN_SNRS,
             default_tx_power: float = DEFAULT_TX_POWER,
             max_tx_power: float = MAX_TX_POWER,
             min_tx_power: float = MIN_TX_POWER,
@@ -28,32 +28,37 @@ class Solver:
     ) -> None:
         self.stations = stations
         self.access_points = access_points
-        self.mcs_data_rates = mcs_data_rates
+        self.mcs_values = range(mcs_values)
+        self.mcs_data_rates = np.array(mcs_data_rates).astype(float)
+        self.min_sinr = dbm_to_lin(min_snr)
+        self.default_tx_power = dbm_to_lin(default_tx_power).item()
+        self.max_tx_power = dbm_to_lin(max_tx_power).item()
+        self.min_tx_power = dbm_to_lin(min_tx_power).item()
+        self.noise_floor = dbm_to_lin(noise_floor).item()
+        self.min_throughput = min_throughput
+        self.opt_sum = opt_sum
         self.max_iterations = max_iterations
         self.epsilon = epsilon
-        self.min_sinr = dbm_to_lin(min_snr)
-        self.max_tx_power = dbm_to_lin(max_tx_power).item()
-        self.noise_floor = dbm_to_lin(noise_floor).item()
 
         self.master = Master(
-            min_throughput=min_throughput,
-            opt_sum=opt_sum
+            min_throughput=self.min_throughput,
+            opt_sum=self.opt_sum
         )
         self.pricing = Pricing(
-            mcs_values=range(mcs_values),
-            mcs_data_rates=mcs_data_rates,
-            min_sinr=dbm_to_lin(min_snr),
-            default_tx_power=dbm_to_lin(default_tx_power).item(),
-            max_tx_power=dbm_to_lin(max_tx_power).item(),
-            min_tx_power=dbm_to_lin(min_tx_power).item(),
-            noise_floor=dbm_to_lin(noise_floor).item(),
-            opt_sum=opt_sum
+            mcs_values=self.mcs_values,
+            mcs_data_rates=self.mcs_data_rates,
+            min_sinr=self.min_sinr,
+            default_tx_power=self.default_tx_power,
+            max_tx_power=self.max_tx_power,
+            min_tx_power=self.min_tx_power,
+            noise_floor=self.noise_floor,
+            opt_sum=self.opt_sum
         )
 
     def _tx_possible(self, path_loss: float) -> bool:
         return self.max_tx_power >= self.min_sinr[0] * path_loss * self.noise_floor
 
-    def _generate_data(self, path_loss: NDArray) -> dict:
+    def _generate_data(self, path_loss: np.ndarray) -> dict:
         graph = nx.DiGraph()
 
         for s in self.stations:
@@ -78,7 +83,7 @@ class Solver:
             'link_path_loss': {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
         }
 
-    def __call__(self, path_loss: NDArray, return_objectives: bool = False) -> tuple:
+    def __call__(self, path_loss: np.ndarray, return_objectives: bool = False) -> tuple:
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 

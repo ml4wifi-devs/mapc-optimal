@@ -1,15 +1,14 @@
-from numpy.typing import NDArray
-
 import networkx as nx
+import numpy as np
 import pulp as plp
 
 
 class Pricing:
     def __init__(
             self,
-            mcs_values: NDArray,
-            mcs_data_rates: NDArray,
-            min_sinr: NDArray,
+            mcs_values: list,
+            mcs_data_rates: list,
+            min_sinr: np.ndarray,
             default_tx_power: float,
             max_tx_power: float,
             min_tx_power: float,
@@ -32,7 +31,7 @@ class Pricing:
 
     def initial_configuration(
             self,
-            stations: NDArray,
+            stations: list,
             link_path_loss: dict,
             graph: nx.DiGraph
     ) -> dict:
@@ -77,9 +76,9 @@ class Pricing:
             dual_alpha: float,
             dual_beta: dict,
             dual_gamma: dict,
-            stations: NDArray,
-            access_points: NDArray,
-            links: NDArray,
+            stations: list,
+            access_points: list,
+            links: list,
             link_node_a: dict,
             link_node_b: dict,
             link_path_loss: dict,

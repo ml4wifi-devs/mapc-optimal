@@ -1,5 +1,3 @@
-from numpy.typing import NDArray
-
 import pulp as plp
 
 
@@ -14,12 +12,12 @@ class Master:
 
     def __call__(
             self,
-            stations: NDArray,
+            stations: list,
             link_node_b: dict,
             conf_links: dict,
             conf_link_rates: dict,
             conf_total_rates: dict,
-            confs: NDArray
+            confs: list
     ) -> tuple:
 
         # Definition of the master model
