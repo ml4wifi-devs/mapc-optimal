@@ -23,12 +23,14 @@ class Solver:
             noise_floor: float = NOISE_FLOOR,
             min_throughput: float = 0.,
             opt_sum: bool = False,
-            max_iterations: int = 10
+            max_iterations: int = 100,
+            epsilon: float = 1e-5
     ) -> None:
         self.stations = stations
         self.access_points = access_points
         self.mcs_data_rates = mcs_data_rates
         self.max_iterations = max_iterations
+        self.epsilon = epsilon
         self.min_sinr = dbm_to_lin(min_snr)
         self.max_tx_power = dbm_to_lin(max_tx_power).item()
         self.noise_floor = dbm_to_lin(noise_floor).item()
@@ -76,7 +78,7 @@ class Solver:
             'link_path_loss': {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
         }
 
-    def __call__(self, path_loss: NDArray) -> tuple:
+    def __call__(self, path_loss: NDArray, return_objectives: bool = False) -> tuple:
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 
@@ -89,12 +91,10 @@ class Solver:
             graph=problem_data['graph']
         )
 
-        iteration = 0
-        master_goal_best = -float('inf')
-        pricing_goal_best = -float('inf')
+        pricing_objectives = []
 
-        while iteration < self.max_iterations:
-            master_result, master_goal = self.master(
+        for _ in range(self.max_iterations):
+            master_result, master_objective = self.master(
                 stations=problem_data['stations'],
                 link_node_b=problem_data['link_node_b'],
                 conf_links=configuration['conf_links'],
@@ -103,7 +103,7 @@ class Solver:
                 confs=configuration['confs']
             )
 
-            configuration, pricing_goal = self.pricing(
+            configuration, pricing_objective = self.pricing(
                 dual_alpha=master_result['alpha'],
                 dual_beta=master_result['beta'],
                 dual_gamma=master_result['gamma'],
@@ -115,14 +115,10 @@ class Solver:
                 link_path_loss=problem_data['link_path_loss'],
                 configuration=configuration
             )
+            pricing_objectives.append(pricing_objective)
 
-            if master_goal > master_goal_best or pricing_goal > pricing_goal_best:
-                master_goal_best = max(master_goal, master_goal_best)
-                pricing_goal_best = max(pricing_goal, pricing_goal_best)
-            else:
+            if pricing_objective <= self.epsilon:
                 break
-
-            iteration += 1
 
         result = {
             'links': configuration['conf_links'],
@@ -131,5 +127,9 @@ class Solver:
             'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in tx_power.items()} for c, tx_power in configuration['conf_link_tx_power'].items()},
             'shares': master_result['shares']
         }
+        total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
 
-        return result, sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
+        if return_objectives:
+            return result, total_rate, pricing_objectives
+        else:
+            return result, total_rate
