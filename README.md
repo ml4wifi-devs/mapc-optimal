@@ -90,10 +90,24 @@ For a more detailed example, refer to the test case in `test/test_solver.py`.
   using the TGax channel model based on the positions of the pair of nodes:
      
     ```python
+    import numpy as np    
     from mapc_optimal import position_to_path_loss
   
-    pos = ... # Positions of the pair of nodes as a two-dimensional array of x and y coordinates
-    walls = ... # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes)
+    # Positions of the nodes as an array of x and y coordinates
+    pos = np.array([
+        [x_1, y_1],
+        [x_2, y_2],
+        ...
+        [x_n, y_n]
+    ])
+    
+    # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes)
+    walls = np.zeros((n, n))
+    walls[i_1, j_1] = 1
+    walls[i_2, j_2] = 1
+    ...
+    walls[i_m, j_m] = 1
+
     path_loss = position_to_path_loss(pos, walls)
     ```
 - The tool is dependent on `mapc-sim`, a simulation tool for IEEE 802.11 MAPC C-SR scenarios. We encourage you to 
