@@ -86,13 +86,13 @@ For a more detailed example, refer to the test case in `test/test_solver.py`.
 
 - The solver requires the path loss between each pair of nodes in the network. The reason for this is that the solver 
   should be independent of the channel model used. Therefore, the path loss must be calculated beforehand. Note, that 
-  if you do not require the specific channel model, you can use the provided function in to calculate the path loss 
-  using the TGax channel model based on the node positions:
+  if you do not require a specific channel model, you can use the provided function to calculate the path loss 
+  using the TGax channel model based on the positions of the pair of nodes:
      
     ```python
     from mapc_optimal import position_to_path_loss
   
-    pos = ... # Node positions as a two-dimensional array of x and y coordinates
+    pos = ... # Positions of the pair of nodes as a two-dimensional array of x and y coordinates
     walls = ... # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes)
     path_loss = position_to_path_loss(pos, walls)
     ```
