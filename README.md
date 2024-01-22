@@ -53,10 +53,14 @@ solver = Solver(stations, access_points)
 configurations, rate = solver(path_loss)
 ```
 
+where `stations` and `access_points` are lists of numbers representing the stations and access points (APs) in the 
+network, respectively. Identifiers of the stations and APs should be unique and cover the range from $0$ to $n - 1$
+(where $n$ is the total number of nodes in the network). The `path_loss` is an $n \times n$ matrix representing the 
+path loss between each pair of nodes in the network. The solver returns calculated configurations and the corresponding
+total throughput of the network.
+
 The `Solver` class can be further configured by passing additional arguments:
 
-- `stations`: A list of numbers representing the stations in the network.
-- `access_points`: A list of numbers representing the access points in the network.
 - `mcs_values`: A number of MCS values available in the network [*12 by default*].
 - `mcs_data_rates`: A list of data rates corresponding to the MCS values (Mb/s) [*IEEE 802.11ax single stream with 20 
   MHz bandwidth and 800 ns GI data rates by default*].
@@ -85,29 +89,31 @@ For a more detailed example, refer to the test case in `test/test_solver.py`.
 ## Additional Notes
 
 - The solver requires the path loss between each pair of nodes in the network. The reason for this is that the solver 
-  should be independent of the channel model used. Therefore, the path loss must be calculated beforehand. Note, that 
+  should be independent of the channel model used. Therefore, the path loss must be calculated beforehand. Note that 
   if you do not require a specific channel model, you can use the provided function to calculate the path loss 
-  using the TGax channel model based on the positions of the pair of nodes:
+  using the TGax channel model based on the positions of the nodes:
      
     ```python
     import numpy as np    
     from mapc_optimal import position_to_path_loss
   
-    # Positions of the nodes as an array of x and y coordinates
+    # Positions of the nodes as an array of `x` and `y` coordinates. `i`-th row represents the position 
+    # of the node with identifier `i` in the `stations` and `access_points` lists.
     pos = np.array([
+        [x_0, y_0],
         [x_1, y_1],
-        [x_2, y_2],
         ...
-        [x_n, y_n]
+        [x_n-1, y_n-1]
     ])
     
-    # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes)
+    # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes `i` and `j`).
     walls = np.zeros((n, n))
+    walls[i_0, j_0] = 1
     walls[i_1, j_1] = 1
-    walls[i_2, j_2] = 1
     ...
     walls[i_m, j_m] = 1
 
+    # n x n matrix representing the path loss between each pair of nodes.
     path_loss = position_to_path_loss(pos, walls)
     ```
 - The tool is dependent on `mapc-sim`, a simulation tool for IEEE 802.11 MAPC C-SR scenarios. We encourage you to 
