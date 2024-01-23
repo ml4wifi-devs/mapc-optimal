@@ -82,6 +82,7 @@ class Pricing:
             link_node_a: dict,
             link_node_b: dict,
             link_path_loss: dict,
+            max_interference: dict,
             configuration: dict
     ) -> tuple:
 
@@ -101,8 +102,8 @@ class Pricing:
         # data rate obtained in link
         link_data_rate = plp.LpVariable.dicts('link_data_rate', links, lowBound=0, cat=plp.LpContinuous)
 
-        # helper variable: q[a, l, m] = link_tx_power[l] * link_mcs[l, m]
-        q = plp.LpVariable.dicts('q', [(a, l, m) for a in access_points for l in links for m in self.mcs_values], lowBound=0, cat=plp.LpContinuous)
+        # interference level in link
+        link_interference = plp.LpVariable.dicts('link_interference', [(l, m) for l in links for m in self.mcs_values], lowBound=0, cat=plp.LpContinuous)
 
         # Constraints:
         for s in stations:
@@ -120,23 +121,21 @@ class Pricing:
             pricing += link_tx_power[l] <= self.max_tx_power * link_on[l], f'link_tx_power_max_{l}_c'
             pricing += link_tx_power[l] >= self.min_tx_power * link_on[l], f'link_tx_power_min_{l}_c'
 
-            # the way transmission modes are switched on in link (incremental switching-on)
             for m in self.mcs_values:
+                # the way transmission modes are switched on in link (incremental switching-on)
                 if m == 0:
                     pricing += link_mcs[l, 0] <= link_on[l], f'link_mcs_{l}_{m}_c'
                 else:
                     pricing += link_mcs[l, m] <= link_mcs[l, m - 1], f'link_mcs_{l}_{m}_c'
 
-                # calculation of SINR in link using the helper variable q
-                for i in access_points:
-                    pricing += q[i, l, m] <= self.max_tx_power * link_mcs[l, m], f'q_{i}_{l}_{m}_c1'
-                    pricing += q[i, l, m] <= link_tx_power[l], f'q_{i}_{l}_{m}_c2'
-                    pricing += q[i, l, m] >= link_tx_power[l] - self.max_tx_power * (1 - link_mcs[l, m]), f'q_{i}_{l}_{m}_c3'
+                # interference level in link
+                pricing += link_interference[l, m] == plp.lpSum(
+                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, s]) +
+                    self.min_sinr[m] * link_path_loss[l] * self.noise_floor
+                    for i in access_points for l_i in links if i != a and link_node_a[l_i] == i
+                ), f'link_interference_{l}_{m}_c1'
 
-                pricing += q[a, l, m] >= (
-                    plp.lpSum(self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, s] * q[i, l, m] for i in access_points if i != a)
-                    + self.min_sinr[m] * link_path_loss[l] * self.noise_floor * link_mcs[l, m]
-                ), f'q_{l}_{m}_c4'
+                pricing += link_tx_power[l] + max_interference[l, m] * (1 - link_mcs[l, m]) >= link_interference[l, m], f'link_interference_{l}_{m}_c2'
 
             # data rate obtained in link (on the basis of the switched-on MCS modes)
             pricing += link_data_rate[l] == plp.lpSum(self.mcs_rate_diff[m] * link_mcs[l, m] for m in self.mcs_values), f'link_data_rate_{l}_c'

@@ -73,15 +73,31 @@ class Solver:
             if self._tx_possible(best_pl):
                 graph.add_edge(f'AP_{best_ap}', f'STA_{s}')
 
-        return {
+        problem_data = {
             'graph': graph,
             'stations': [v for v in graph.nodes if 'STA' in v],
             'access_points': [v for v in graph.nodes if 'AP' in v],
             'links': list(graph.edges),
             'link_node_a': {e: e[0] for e in graph.edges},  # APs
             'link_node_b': {e: e[1] for e in graph.edges},  # STAs
-            'link_path_loss': {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
         }
+
+        link_path_loss = {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
+        max_interference = {}
+
+        for l in graph.edges:
+            a, s = problem_data['link_node_a'][l], problem_data['link_node_b'][l]
+
+            for m in self.mcs_values:
+                max_interference[l, m] = sum(
+                    self.max_tx_power * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, s]) +
+                    self.min_sinr[m] * link_path_loss[l] * self.noise_floor
+                    for i in problem_data['access_points'] if i != a
+                )
+
+        problem_data['link_path_loss'] = link_path_loss
+        problem_data['max_interference'] = max_interference
+        return problem_data
 
     def __call__(self, path_loss: np.ndarray, return_objectives: bool = False) -> tuple:
         path_loss = dbm_to_lin(path_loss)
@@ -118,6 +134,7 @@ class Solver:
                 link_node_a=problem_data['link_node_a'],
                 link_node_b=problem_data['link_node_b'],
                 link_path_loss=problem_data['link_path_loss'],
+                max_interference=problem_data['max_interference'],
                 configuration=configuration
             )
             pricing_objectives.append(pricing_objective)
