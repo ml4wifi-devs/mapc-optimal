@@ -99,7 +99,10 @@ class Solver:
         problem_data = self._generate_data(path_loss)
 
         if len(problem_data['links']) == 0:
-            return {}, 0.
+            if return_objectives:
+                return {}, 0, []
+            else:
+                return {}, 0.
 
         configuration = self.pricing.initial_configuration(
             links=problem_data['links'],
