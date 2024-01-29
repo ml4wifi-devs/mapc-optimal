@@ -2,8 +2,8 @@ from itertools import product
 
 import networkx as nx
 import numpy as np
-from mapc_sim.constants import *
 
+from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
 from mapc_optimal.master import Master
 from mapc_optimal.pricing import Pricing
 from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
@@ -16,8 +16,7 @@ class Solver:
             access_points: list,
             mcs_values: int = len(DATA_RATES),
             mcs_data_rates: list = DATA_RATES,
-            min_snr: list = MEAN_SNRS,
-            default_tx_power: float = DEFAULT_TX_POWER,
+            min_snr: list = MIN_SNRS,
             max_tx_power: float = MAX_TX_POWER,
             min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
@@ -31,7 +30,6 @@ class Solver:
         self.mcs_values = range(mcs_values)
         self.mcs_data_rates = np.array(mcs_data_rates).astype(float)
         self.min_sinr = dbm_to_lin(min_snr)
-        self.default_tx_power = dbm_to_lin(default_tx_power).item()
         self.max_tx_power = dbm_to_lin(max_tx_power).item()
         self.min_tx_power = dbm_to_lin(min_tx_power).item()
         self.noise_floor = dbm_to_lin(noise_floor).item()
@@ -48,7 +46,6 @@ class Solver:
             mcs_values=self.mcs_values,
             mcs_data_rates=self.mcs_data_rates,
             min_sinr=self.min_sinr,
-            default_tx_power=self.default_tx_power,
             max_tx_power=self.max_tx_power,
             min_tx_power=self.min_tx_power,
             noise_floor=self.noise_floor,

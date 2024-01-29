@@ -2,6 +2,8 @@ import networkx as nx
 import numpy as np
 import pulp as plp
 
+from mapc_optimal.utils import lin_to_dbm
+
 
 class Pricing:
     def __init__(
@@ -9,7 +11,6 @@ class Pricing:
             mcs_values: list,
             mcs_data_rates: list,
             min_sinr: np.ndarray,
-            default_tx_power: float,
             max_tx_power: float,
             min_tx_power: float,
             noise_floor: float,
@@ -19,7 +20,6 @@ class Pricing:
         self.mcs_data_rates = mcs_data_rates
         self.min_sinr = min_sinr
         self.mcs_rate_diff = {m: mcs_data_rates[0].item() if m == 0 else (mcs_data_rates[m] - mcs_data_rates[m - 1]).item() for m in mcs_values}
-        self.default_tx_power = default_tx_power
         self.max_tx_power = max_tx_power
         self.min_tx_power = min_tx_power
         self.noise_floor = noise_floor
@@ -67,7 +67,9 @@ class Pricing:
         configuration['conf_link_tx_power'] = {c: {} for c in configuration['confs']}
 
         for c in configuration['confs']:
-            configuration['conf_link_tx_power'][c] = {l: self.max_tx_power for l in configuration['conf_links'][c]}
+            configuration['conf_link_tx_power'][c] = {
+                l: lin_to_dbm(self.max_tx_power).item() for l in configuration['conf_links'][c]
+            }
 
         return configuration
 
@@ -130,9 +132,9 @@ class Pricing:
 
                 # interference level in link
                 pricing += link_interference[l, m] == plp.lpSum(
-                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, s]) +
+                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[link_node_a[l_i], s]) +
                     self.min_sinr[m] * link_path_loss[l] * self.noise_floor
-                    for i in access_points for l_i in links if i != a and link_node_a[l_i] == i
+                    for l_i in links if link_node_a[l_i] != a
                 ), f'link_interference_{l}_{m}_c1'
 
                 pricing += link_tx_power[l] + max_interference[l, m] * (1 - link_mcs[l, m]) >= link_interference[l, m], f'link_interference_{l}_{m}_c2'
@@ -173,7 +175,9 @@ class Pricing:
         configuration['conf_links'][conf_num] = [l for l in links if pricing.link_on[l].varValue == 1]
 
         # transmission power for the new compatible set
-        configuration['conf_link_tx_power'][conf_num] = {l: pricing.link_tx_power[l].varValue for l in links if pricing.link_on[l].varValue == 1}
+        configuration['conf_link_tx_power'][conf_num] = {
+            l: lin_to_dbm(pricing.link_tx_power[l].varValue).item() for l in links if pricing.link_on[l].varValue == 1
+        }
 
         # link rates for the new compatible set
         configuration['conf_link_rates'][conf_num] = {}

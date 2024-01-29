@@ -1,11 +1,11 @@
 [project]
 name = "mapc_optimal"
 version = "0.1.0"
-description = "Optimal solution of the MAPC (c-SR) problem for IEEE 802.11 networks"
+description = "Optimal solution of the MAPC (C-SR) problem for IEEE 802.11 networks"
 
 readme = "README.md"
 license = {file = "LICENSE"}
-keywords = ["802.11", "multi-access point coordination", "optimization"]
+keywords = ["802.11", "coordinated spatial reuse", "multi-access point coordination", "optimization"]
 
 authors = [
   {name = "Maksymilian Wojnar", email = "maksymilian.wojnar@agh.edu.pl"},
@@ -18,7 +18,6 @@ authors = [
 
 requires-python = ">=3.9"
 dependencies = [
-  "mapc-sim~=0.1.1",
   "networkx~=3.2.1",
   "numpy~=1.26.0",
   "pulp~=2.7.0"
