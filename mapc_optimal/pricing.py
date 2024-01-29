@@ -1,8 +1,5 @@
-import networkx as nx
 import numpy as np
 import pulp as plp
-
-from mapc_optimal.utils import lin_to_dbm
 
 
 class Pricing:
@@ -19,7 +16,7 @@ class Pricing:
         self.mcs_values = mcs_values
         self.mcs_data_rates = mcs_data_rates
         self.min_sinr = min_sinr
-        self.mcs_rate_diff = {m: mcs_data_rates[0].item() if m == 0 else (mcs_data_rates[m] - mcs_data_rates[m - 1]).item() for m in mcs_values}
+        self.mcs_rate_diff = {m: mcs_data_rates[0] if m == 0 else (mcs_data_rates[m] - mcs_data_rates[m - 1]) for m in mcs_values}
         self.max_tx_power = max_tx_power
         self.min_tx_power = min_tx_power
         self.noise_floor = noise_floor
@@ -27,13 +24,12 @@ class Pricing:
 
     def _best_rate(self, path_loss: float) -> float:
         mcs = (self.max_tx_power >= self.min_sinr * path_loss * self.noise_floor).sum()
-        return self.mcs_data_rates[mcs - 1].item()
+        return self.mcs_data_rates[mcs - 1]
 
     def initial_configuration(
             self,
-            stations: list,
+            links: list,
             link_path_loss: dict,
-            graph: nx.DiGraph
     ) -> dict:
         configuration = {}
 
@@ -41,17 +37,16 @@ class Pricing:
         # to be extended with iterations of the algorithm
         # we start with very simple compatible sets:
         # -> each set is related to transmission to a single STA from its AP
-        configuration['conf_num'] = len(stations) + 1
+        configuration['conf_num'] = len(links) + 1
 
         # we number the configurations starting from 1
-        configuration['confs'] = range(1, len(stations) + 1)
+        configuration['confs'] = range(1, len(links) + 1)
 
         # links used in compatible sets
         configuration['conf_links'] = {c: None for c in configuration['confs']}
 
-        for i, s in enumerate(stations, 1):
-            sta_link = list(graph.in_edges(s))
-            configuration['conf_links'][i] = [sta_link[0]]
+        for i, l in enumerate(links, 1):
+            configuration['conf_links'][i] = [l]
 
         # link rates for compatible sets
         configuration['conf_link_rates'] = {c: {} for c in configuration['confs']}
@@ -67,9 +62,7 @@ class Pricing:
         configuration['conf_link_tx_power'] = {c: {} for c in configuration['confs']}
 
         for c in configuration['confs']:
-            configuration['conf_link_tx_power'][c] = {
-                l: lin_to_dbm(self.max_tx_power).item() for l in configuration['conf_links'][c]
-            }
+            configuration['conf_link_tx_power'][c] = {l: self.max_tx_power for l in configuration['conf_links'][c]}
 
         return configuration
 
@@ -176,7 +169,7 @@ class Pricing:
 
         # transmission power for the new compatible set
         configuration['conf_link_tx_power'][conf_num] = {
-            l: lin_to_dbm(pricing.link_tx_power[l].varValue).item() for l in links if pricing.link_on[l].varValue == 1
+            l: pricing.link_tx_power[l].varValue for l in links if pricing.link_on[l].varValue == 1
         }
 
         # link rates for the new compatible set

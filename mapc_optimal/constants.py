@@ -25,7 +25,7 @@ https://mentor.ieee.org/802.11/dcn/14/11-14-0980-16-00ax-simulation-scenarios.do
 REFERENCE_DISTANCE = 1.
 r"""TGax channel model parameter (m)"""
 
-DATA_RATES = np.array([8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2])
+DATA_RATES = [8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2]
 r"""Data rates for IEEE 802.11ax standard, 20 MHz channel width, 1 spatial stream, and 800 ns GI (Mb/s)"""
 
 MEAN_SNRS = np.array([
@@ -36,5 +36,5 @@ MEAN_SNRS = np.array([
 r"""Parameters of the success probability curves - cdf of the normal distribution with standard deviation of 2
 (derived from ns-3 simulations)"""
 
-MIN_SNRS = MEAN_SNRS + 5.1516595
-r"""Minimal SNR values for each MCS (dB) to obtain 99.5% success probability"""
+MIN_SNRS = MEAN_SNRS + 6.1804724
+r"""Minimal SNR values for each MCS (dB) to obtain 99.9% success probability"""

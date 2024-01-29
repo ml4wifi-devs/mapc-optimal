@@ -1,6 +1,5 @@
 from itertools import product
 
-import networkx as nx
 import numpy as np
 
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
@@ -28,7 +27,7 @@ class Solver:
         self.stations = stations
         self.access_points = access_points
         self.mcs_values = range(mcs_values)
-        self.mcs_data_rates = np.array(mcs_data_rates).astype(float)
+        self.mcs_data_rates = mcs_data_rates
         self.min_sinr = dbm_to_lin(min_snr)
         self.max_tx_power = dbm_to_lin(max_tx_power).item()
         self.min_tx_power = dbm_to_lin(min_tx_power).item()
@@ -56,7 +55,7 @@ class Solver:
         return self.max_tx_power >= self.min_sinr[0] * path_loss * self.noise_floor
 
     def _generate_data(self, path_loss: np.ndarray) -> dict:
-        graph = nx.DiGraph()
+        links = []
 
         for s in self.stations:
             best_pl = float('inf')
@@ -64,25 +63,24 @@ class Solver:
 
             for a in self.access_points:
                 if path_loss[a, s] < best_pl:
-                    best_pl = path_loss[a, s].item()
+                    best_pl = path_loss[a, s]
                     best_ap = a
 
             if self._tx_possible(best_pl):
-                graph.add_edge(f'AP_{best_ap}', f'STA_{s}')
+                links.append((f'AP_{best_ap}', f'STA_{s}'))
 
         problem_data = {
-            'graph': graph,
-            'stations': [v for v in graph.nodes if 'STA' in v],
-            'access_points': [v for v in graph.nodes if 'AP' in v],
-            'links': list(graph.edges),
-            'link_node_a': {e: e[0] for e in graph.edges},  # APs
-            'link_node_b': {e: e[1] for e in graph.edges},  # STAs
+            'stations': [f'STA_{s}' for s in self.stations],
+            'access_points': [f'AP_{a}' for a in self.access_points],
+            'links': links,
+            'link_node_a': {l: l[0] for l in links},  # APs
+            'link_node_b': {l: l[1] for l in links},  # STAs
         }
 
         link_path_loss = {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
         max_interference = {}
 
-        for l in graph.edges:
+        for l in links:
             a, s = problem_data['link_node_a'][l], problem_data['link_node_b'][l]
 
             for m in self.mcs_values:
@@ -104,9 +102,8 @@ class Solver:
             return {}, 0.
 
         configuration = self.pricing.initial_configuration(
-            stations=problem_data['stations'],
-            link_path_loss=problem_data['link_path_loss'],
-            graph=problem_data['graph']
+            links=problem_data['links'],
+            link_path_loss=problem_data['link_path_loss']
         )
 
         pricing_objectives = []
