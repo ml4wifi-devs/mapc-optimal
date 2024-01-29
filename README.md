@@ -31,8 +31,8 @@ The repository is structured as follows:
 
 - `mapc_optimal/`: The main package of the tool.
   - `constants.py`: Default values of the parameters used in the solver.
-  - `master.py`: The formulation of the master problem solving the selection and division of configurations.
-  - `pricing.py`: The pricing algorithm used to propose new configurations for the master problem.
+  - `main.py`: The formulation of the main problem solving the selection and division of configurations.
+  - `pricing.py`: The pricing algorithm used to propose new configurations for the main problem.
   - `solver.py`: The solver class coordinating the overall process of finding the optimal solution. It initializes the 
      solver, sets up the network configuration, and manages the iterations.
   - `utils.py`: Utility functions, including the function for calculation of the path loss from node positions using 

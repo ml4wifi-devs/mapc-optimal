@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
-from mapc_optimal.master import Master
+from mapc_optimal.main import Main
 from mapc_optimal.pricing import Pricing
 from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
 
@@ -38,7 +38,7 @@ class Solver:
         self.max_iterations = max_iterations
         self.epsilon = epsilon
 
-        self.master = Master(
+        self.main = Main(
             min_throughput=self.min_throughput,
             opt_sum=self.opt_sum
         )
@@ -112,7 +112,7 @@ class Solver:
         pricing_objectives = []
 
         for _ in range(self.max_iterations):
-            master_result, master_objective = self.master(
+            main_result, main_objective = self.main(
                 stations=problem_data['stations'],
                 link_node_b=problem_data['link_node_b'],
                 conf_links=configuration['conf_links'],
@@ -122,9 +122,9 @@ class Solver:
             )
 
             configuration, pricing_objective = self.pricing(
-                dual_alpha=master_result['alpha'],
-                dual_beta=master_result['beta'],
-                dual_gamma=master_result['gamma'],
+                dual_alpha=main_result['alpha'],
+                dual_beta=main_result['beta'],
+                dual_gamma=main_result['gamma'],
                 stations=problem_data['stations'],
                 access_points=problem_data['access_points'],
                 links=problem_data['links'],
@@ -144,7 +144,7 @@ class Solver:
             'link_rates': configuration['conf_link_rates'],
             'total_rates': configuration['conf_total_rates'],
             'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in tx_power.items()} for c, tx_power in configuration['conf_link_tx_power'].items()},
-            'shares': master_result['shares']
+            'shares': main_result['shares']
         }
         total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
 
