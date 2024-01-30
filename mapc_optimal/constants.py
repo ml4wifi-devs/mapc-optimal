@@ -1,3 +1,7 @@
+"""
+Default values of the parameters used in the solver.
+"""
+
 import numpy as np
 
 

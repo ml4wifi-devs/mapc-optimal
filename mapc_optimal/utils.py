@@ -1,9 +1,12 @@
-import numpy as np
+"""Utility functions, including the function for calculation of the path loss from node positions using
+    the TGax channel model."""
 
+import numpy as np
+from numpy.typing import NDArray, ArrayLike
 from mapc_optimal.constants import BREAKING_POINT, CENTRAL_FREQUENCY, REFERENCE_DISTANCE, WALL_LOSS
 
 
-def dbm_to_lin(x: np.ndarray) -> np.ndarray:
+def dbm_to_lin(x: ArrayLike) -> NDArray:
     """
     Converts dBm to a linear scale.
 
@@ -14,14 +17,14 @@ def dbm_to_lin(x: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    array_like
+    NDArray
         Output in a linear scale.
     """
 
     return np.power(10., x / 10.).astype(float)
 
 
-def lin_to_dbm(x: np.ndarray) -> np.ndarray:
+def lin_to_dbm(x: ArrayLike) -> NDArray:
     """
     Converts linear scale to dBm.
 
@@ -32,14 +35,14 @@ def lin_to_dbm(x: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    array_like
+    NDArray
         Output in dBm.
     """
 
     return 10. * np.log10(x).astype(float)
 
 
-def tgax_path_loss(distance: np.ndarray, walls: np.ndarray) -> np.ndarray:
+def tgax_path_loss(distance: ArrayLike, walls: ArrayLike) -> NDArray:
     r"""
     Calculates the path loss according to the TGax channel model [1]_.
 
@@ -65,7 +68,7 @@ def tgax_path_loss(distance: np.ndarray, walls: np.ndarray) -> np.ndarray:
             (distance > BREAKING_POINT) * 35 * np.log10(distance / BREAKING_POINT) + WALL_LOSS * walls)
 
 
-def positions_to_path_loss(pos: np.ndarray, walls: np.ndarray) -> np.ndarray:
+def positions_to_path_loss(pos: ArrayLike, walls: ArrayLike) -> NDArray:
     """
     Calculates the path loss for all nodes based on their positions and the wall positions.
     Channel is modeled using the TGax path loss model.
@@ -79,8 +82,8 @@ def positions_to_path_loss(pos: np.ndarray, walls: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    array_like
-        Two dimensional array of path losses (dB) between all nodes.
+    NDArray
+        Two-dimensional array of path losses (dB) between all nodes.
     """
 
     distance = np.sqrt(np.sum((pos[:, None, :] - pos[None, ...]) ** 2, axis=-1))

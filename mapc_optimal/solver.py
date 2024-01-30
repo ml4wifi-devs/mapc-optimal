@@ -9,6 +9,60 @@ from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
 
 
 class Solver:
+    """The solver class coordinating the overall process of finding the optimal
+    solution. It initializes the solver, sets up the network configuration,
+    and manages the iterations.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+       from mapc_optimal import Solver
+
+       # Define your network
+       # ...
+
+       solver = Solver(stations, access_points)
+       configurations, rate = solver(path_loss)
+
+
+    .. note::
+        The solver requires the path loss between each pair of nodes in the
+        network. The reason for this is that the solver should be independent
+        of the channel model used. Therefore, the path loss must be
+        calculated beforehand. Note that if you do not require a specific
+        channel model, you can use the provided function to calculate the
+        path loss using the TGax channel model based on the positions of the
+        nodes:
+
+
+        .. code:: python
+
+            import numpy as np
+            from mapc_optimal import position_to_path_loss
+
+            # Positions of the nodes as an array of `x` and `y` coordinates. `i`-th row represents the position
+            # of the node with identifier `i` in the `stations` and `access_points` lists.
+            pos = np.array([
+              [x_0, y_0],
+              [x_1, y_1],
+              ...
+              [x_n-1, y_n-1]
+            ])
+
+            # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes `i` and `j`).
+            walls = np.zeros((n, n))
+            walls[i_0, j_0] = 1
+            walls[i_1, j_1] = 1
+            ...
+            walls[i_m, j_m] = 1
+
+            # n x n matrix representing the path loss between each pair of nodes.
+            path_loss = position_to_path_loss(pos, walls)
+
+
+    """
     def __init__(
             self,
             stations: list,
@@ -24,6 +78,44 @@ class Solver:
             max_iterations: int = 100,
             epsilon: float = 1e-5
     ) -> None:
+        """
+        .. warning::
+            Identifiers of the stations and APs should be unique and
+            cover the range from :math:`0` to :math:`n - 1` (where :math:`n` is the
+            total number of nodes in the network).
+
+        Parameters
+        ----------
+        stations: list
+            Lists of numbers representing the stations.
+        access_points: list
+            Lists of numbers representing the access points (APs) in the network.
+        mcs_values: int
+            A number of MCS values available in the network [*12 by default*].
+        mcs_data_rates: list
+            A list of data rates corresponding to the MCS values (Mb/s) [*IEEE 802.11ax single stream with
+            20MHz bandwidth and 800 ns GI data rates by default*].
+        min_snr: list
+            The minimum SNR required for a successful transmission
+            (dB) for each MCS value [*empirically determined in ns-3 simulations by default*]
+        max_tx_power: float
+            The maximum transmission power (dBm) available [*20 dBm by default*].
+        min_tx_power: float
+            The minimum transmission power (dBm) that can be used [*10 dBm by default*].
+        noise_floor: float
+            The level of noise in the environment (dBm) [*-93.97 dBm by default*].
+        min_throughput: float
+            The minimum throughput required for each node (Mb/s) while maximizing the total throughput
+            [*0 Mb/s by default*].
+        opt_sum: bool
+            A boolean value indicating whether to maximize the sum of the throughput of all nodes in the network
+            (`True`) or the minimum throughput of all nodes in the network (`False`) [*`False` by default*].
+        max_iterations: int
+            The maximum number of iterations of the solver [*100 by default*].
+        epsilon: float
+             The minimum value of the pricing objective function to continue the iterations [*1e-5 by default*].
+
+        """
         self.stations = stations
         self.access_points = access_points
         self.mcs_values = range(mcs_values)
@@ -95,6 +187,25 @@ class Solver:
         return problem_data
 
     def __call__(self, path_loss: np.ndarray, return_objectives: bool = False) -> tuple:
+        """Run optimization.
+
+
+        Parameters
+        ----------
+        path_loss
+            TODO
+        return_objectives
+            TODO
+
+        Returns
+        -------
+        tuple
+            Solution. Additionally, the solver can return a list of the pricing objective
+            values for each iteration. It can be useful to check if the solver has
+            converged. To do so, set the ``return_objective`` argument to ``True``
+            when calling the solver.
+
+        """
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 

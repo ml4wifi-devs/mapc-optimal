@@ -1,3 +1,4 @@
+"""The formulation of the main problem solving the selection and division of configurations."""
 import pulp as plp
 
 

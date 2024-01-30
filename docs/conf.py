@@ -12,7 +12,7 @@ project = 'mapc_optimal'
 copyright = (f'{date.today().year}, Maksymilian Wojnar,Wojciech Ciężobka,'
              f'Katarzyna Kosek-Szott,Krzysztof Rusek,Szymon Szott')
 author = ('Maksymilian Wojnar,Wojciech Ciężobka,Katarzyna Kosek-Szott,'
-          'Krzysztof Rusek,Szymon Szott')
+          'Krzysztof Rusek,Szymon Szott, Piotr Chołda')
 version = 'latest'
 
 sys.path.insert(0, os.path.abspath('..'))
@@ -54,8 +54,11 @@ html_theme_options = {'show_powered_by': False,
 autoapi_dirs = ["../mapc_optimal"]
 autoapi_type = "python"
 autoapi_add_toctree_entry = True
-autoapi_options = ["undoc-members"]
-autodoc_typehints = "signature"
+autoapi_options = ["show-module-summary","members", "undoc-members", 'imported-members',
+                   "special-members"]
+autoapi_python_class_content="both"
+autodoc_class_signature = "separated"
+autodoc_typehints = 'none'
 
 # sphinx-build -b html docs docs/build/html
 #  open docs/build/html/index.html

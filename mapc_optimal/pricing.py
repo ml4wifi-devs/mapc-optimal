@@ -1,3 +1,4 @@
+"""The pricing algorithm used to propose new configurations for the main problem."""
 import numpy as np
 import pulp as plp
 
