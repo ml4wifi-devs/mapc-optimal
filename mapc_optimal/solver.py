@@ -1,6 +1,7 @@
 from itertools import product
+from typing import Union
 
-import numpy as np
+from numpy.typing import NDArray
 
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
 from mapc_optimal.main import Main
@@ -9,6 +10,60 @@ from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
 
 
 class Solver:
+    """
+    The solver class coordinating the overall process of finding the optimal
+    solution. It initializes the solver, sets up the network configuration,
+    and manages the iterations.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+       from mapc_optimal import Solver
+
+       # Define your network
+       # ...
+
+       solver = Solver(stations, access_points)
+       configurations, rate = solver(path_loss)
+
+
+    .. note::
+        The solver requires the path loss between each pair of nodes in the
+        network. The reason for this is that the solver should be independent
+        of the channel model used. Therefore, the path loss must be
+        calculated beforehand. Note that if you do not require a specific
+        channel model, you can use the provided function to calculate the
+        path loss using the TGax channel model based on the positions of the
+        nodes:
+
+
+        .. code:: python
+
+            import numpy as np
+            from mapc_optimal import position_to_path_loss
+
+            # Positions of the nodes as an array of `x` and `y` coordinates. `i`-th row represents the position
+            # of the node with identifier `i` in the `stations` and `access_points` lists.
+            pos = np.array([
+              [x_0, y_0],
+              [x_1, y_1],
+              ...
+              [x_n-1, y_n-1]
+            ])
+
+            # A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes `i` and `j`).
+            walls = np.zeros((n, n))
+            walls[i_0, j_0] = 1
+            walls[i_1, j_1] = 1
+            ...
+            walls[i_m, j_m] = 1
+
+            # n x n matrix representing the path loss between each pair of nodes.
+            path_loss = position_to_path_loss(pos, walls)
+    """
+
     def __init__(
             self,
             stations: list,
@@ -24,6 +79,43 @@ class Solver:
             max_iterations: int = 100,
             epsilon: float = 1e-5
     ) -> None:
+        r"""
+        .. note::
+            Identifiers of the stations and APs should be unique and
+            cover the range from :math:`0` to :math:`n - 1` (where :math:`n` is the
+            total number of nodes in the network).
+
+        Parameters
+        ----------
+        stations: list
+            Lists of numbers representing the stations.
+        access_points: list
+            Lists of numbers representing the access points (APs) in the network.
+        mcs_values: int, default=12
+            A number of MCS values available in the network. IEEE 802.11ax values are used by default.
+        mcs_data_rates: list, default=mapc_optimal.constants.DATA_RATES
+            A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
+            20MHz bandwidth and 800 ns GI data rates by default.
+        min_snr: list, default=mapc_optimal.constants.MIN_SNRS
+            The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically 
+            determined in ns-3 simulations by default.
+        max_tx_power: float, default=20.0
+            The maximum transmission power (dBm) available.
+        min_tx_power: float, default=10.0
+            The minimum transmission power (dBm) that can be used.
+        noise_floor: float, default=-93.97
+            The level of noise in the environment (dBm).
+        min_throughput: float, default=0.0
+            The minimum throughput required for each node (Mb/s) while maximizing the total throughput.
+        opt_sum: bool, default=False
+            A boolean value indicating whether to maximize the sum of the throughput of all nodes in the network
+            (`True`) or the minimum throughput of all nodes in the network (`False`).
+        max_iterations: int, default=100
+            The maximum number of iterations of the solver.
+        epsilon: float, default=1e-5
+             The minimum value of the pricing objective function to continue the iterations.
+        """
+
         self.stations = stations
         self.access_points = access_points
         self.mcs_values = range(mcs_values)
@@ -52,9 +144,38 @@ class Solver:
         )
 
     def _tx_possible(self, path_loss: float) -> bool:
+        """
+        Checks if any transmission is possible for a given path loss.
+
+        Parameters
+        ----------
+        path_loss : float
+            Path loss between the transmitter and the receiver.
+
+        Returns
+        -------
+        is_tx_possible : bool
+            True if a transmission is possible, False otherwise.
+        """
+        
         return self.max_tx_power >= self.min_sinr[0] * path_loss * self.noise_floor
 
-    def _generate_data(self, path_loss: np.ndarray) -> dict:
+    def _generate_data(self, path_loss: NDArray) -> dict:
+        """
+        Generates the data required for the solver, such as the links, the stations, and the access points
+        in the network, the path loss between each pair of nodes, and the maximum interference level.
+        
+        Parameters
+        ----------
+        path_loss : NDArray
+            Matrix containing the path loss between each pair of nodes.
+
+        Returns
+        -------
+        problem_data : dict
+            Dictionary containing the data required for the solver.
+        """
+
         links = []
 
         for s in self.stations:
@@ -80,21 +201,40 @@ class Solver:
         link_path_loss = {(f'AP_{a}', f'STA_{s}'): path_loss[a, s].item() for a, s in product(self.access_points, self.stations)}
         max_interference = {}
 
-        for l in links:
-            a, s = problem_data['link_node_a'][l], problem_data['link_node_b'][l]
-
-            for m in self.mcs_values:
-                max_interference[l, m] = sum(
-                    self.max_tx_power * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, s]) +
-                    self.min_sinr[m] * link_path_loss[l] * self.noise_floor
-                    for i in problem_data['access_points'] if i != a
-                )
+        for l, m in product(links, self.mcs_values):
+            max_interference[l, m] = sum(
+                self.max_tx_power * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, problem_data['link_node_b'][l]]) +
+                self.min_sinr[m] * link_path_loss[l] * self.noise_floor
+                for i in problem_data['access_points'] if i != problem_data['link_node_a'][l]
+            )
 
         problem_data['link_path_loss'] = link_path_loss
         problem_data['max_interference'] = max_interference
         return problem_data
 
-    def __call__(self, path_loss: np.ndarray, return_objectives: bool = False) -> tuple:
+    def __call__(
+            self, 
+            path_loss: NDArray, 
+            return_objectives: bool = False
+    ) -> Union[tuple[dict, float], tuple[dict, float, list[float]]]:
+        """
+        TODO
+
+        Parameters
+        ----------
+        path_loss : NDArray
+            Matrix containing the path loss between each pair of nodes.
+        return_objectives : bool, default=False
+            Flag indicating whether to return the pricing objective values.
+
+        Returns
+        -------
+        result : tuple[dict, float] or tuple[dict, float, list[float]]
+            Tuple containing the final configurations and the total throughput. Additionally, 
+            the solver can return a list of the pricing objective values for each iteration. 
+            It can be useful to check if the solver has converged.
+        """
+
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss)
 
