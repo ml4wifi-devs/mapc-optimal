@@ -4,10 +4,11 @@ Optimal solution for IEEE 802.11 MAPC Coordinated Spatial Reuse (C-SR) problem
 ``mapc-optimal`` is a tool for finding the optimal solution of the
 Multi-Access Point Coordination (MAPC) scheduling problem with
 coordinated spatial reuse (C-SR) for IEEE 802.11 networks. It provides a
-linear programming solution to find the upper bound on network
-performance. A detailed description can be found in:
+mixed-integer linear programming solution to find the upper bound
+on network performance. A detailed description can be found in:
 
 -  TODO
+
 
 Features
 --------
@@ -19,13 +20,12 @@ Features
    optimization criteria: maximizing the sum of the throughput of all
    nodes in the network and maximizing the minimum throughput of all
    nodes in the network.
--  **Modulation and coding scheme (MCS) optimization**: Select the
+-  **Modulation and coding scheme (MCS) selection**: Select the
    optimal MCS for each transmission.
 -  **Transmission power selection**: Set the appropriate transmit power
    to maximize network performance.
 -  **Versatile network configuration**: Define network settings by
-   specifying network nodes, available MCSs, channel model parameters,
-   and transmission power levels.
+   specifying network nodes, available MCSs, and transmission power levels.
 
 
 Installation
@@ -36,6 +36,7 @@ The package can be installed using pip:
 .. code:: bash
 
    pip install mapc-optimal
+
 
 Usage
 -----
@@ -64,17 +65,17 @@ of nodes in the network. The solver returns calculated configurations
 and the corresponding total throughput of the network.
 
 The :class:`mapc_optimal.Solver`  class can be further configured by passing additional
-arguments.
+arguments to the constructor. Full list of arguments can be found in the documentation.
 
+Additionally, the solver can return a list of the pricing objective values for each
+iteration. It can be useful to check if the solver has converged. To do so, set the
+``return_objective`` argument to ``True`` when calling the solver.
 
 .. code:: python
 
    configurations, rate, objectives = solver(path_loss, return_objective=True)
 
-For a more detailed example, refer to the test case in
-``test/test_solver.py``.
-
-
+For a more detailed example, refer to the test case in ``test/test_solver.py``.
 
 
 How to reference ``mapc-optimal``?

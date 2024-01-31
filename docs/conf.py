@@ -9,10 +9,10 @@ import sys
 from datetime import date
 
 project = 'mapc_optimal'
-copyright = (f'{date.today().year}, Maksymilian Wojnar,Wojciech Ciężobka,'
-             f'Katarzyna Kosek-Szott,Krzysztof Rusek,Szymon Szott')
-author = ('Maksymilian Wojnar,Wojciech Ciężobka,Katarzyna Kosek-Szott,'
-          'Krzysztof Rusek,Szymon Szott, Piotr Chołda')
+copyright = (f'{date.today().year}, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, '
+             f'Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski')
+author = ('Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott,'
+          'Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski')
 version = 'latest'
 
 sys.path.insert(0, os.path.abspath('..'))

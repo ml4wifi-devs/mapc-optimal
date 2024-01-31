@@ -1,13 +1,23 @@
-"""The formulation of the main problem solving the selection and division of configurations."""
+"""
+The formulation of the main problem solving the selection and division of configurations.
+"""
+
 import pulp as plp
 
 
 class Main:
-    def __init__(
-            self,
-            min_throughput: float,
-            opt_sum: bool
-    ) -> None:
+    r"""
+    TODO
+
+    Parameters
+    ----------
+    min_throughput : float
+        The minimum throughput of each station required when optimizing total throughput.
+    opt_sum : bool
+        If True, the total throughput is optimized, otherwise the worst throughput is optimized.
+    """
+
+    def __init__(self, min_throughput: float, opt_sum: bool) -> None:
         self.min_throughput = min_throughput
         self.opt_sum = opt_sum
 
@@ -19,23 +29,38 @@ class Main:
             conf_link_rates: dict,
             conf_total_rates: dict,
             confs: list
-    ) -> tuple:
+    ) -> tuple[dict, float]:
+        """
+        TODO
 
-        # Definition of the main model
+        Parameters
+        ----------
+        stations : list
+            List of the station nodes.
+        link_node_b : dict
+            Dictionary containing the mapping of links to the station nodes.
+        conf_links : dict
+            Dictionary containing the links of each configuration.
+        conf_link_rates : dict
+            Dictionary containing the rates of each link for each configuration.
+        conf_total_rates : dict
+            Dictionary containing the total rate of each configuration.
+        confs : list
+            List of the configurations.
+
+        Returns
+        -------
+        result : tuple[dict, float]
+            Tuple containing the results of the optimization problem and the value of the objective function.
+        """
+
         main = plp.LpProblem('main', plp.LpMaximize)
 
-        # Variables:
-        # weights of compatible sets (share of time period between configurations)
         conf_weight = plp.LpVariable.dicts('conf_weight', confs, lowBound=0, upBound=1, cat=plp.LpContinuous)
-
-        # throughput of a station
         node_throughput = plp.LpVariable.dicts('node_throughput', stations, lowBound=0, cat=plp.LpContinuous)
-
-        # minimum throughput of all stations
         min_throughput = plp.LpVariable('min_throughput', lowBound=0, cat=plp.LpContinuous)
 
-        # Constraints:
-        # percentage of time when we use the configuration
+        # fraction of time when we use the configuration, the sum of all the weights is 1
         main += plp.lpSum(conf_weight[c] for c in confs) == 1, 'conf_weight_c'  # dual: alpha
 
         for s in stations:
@@ -48,26 +73,22 @@ class Main:
             main += node_throughput[s] >= min_throughput, f'worst_throughput_{s}_c'  # dual: gamma
 
         if self.opt_sum:
-            # enforcement of the worst throughput
+            # enforcement of the minimum throughput of each station
             main += min_throughput >= self.min_throughput, f'min_throughput_c'
 
-        # Goal for the main problem
         if self.opt_sum:
+            # maximization of the total throughput
             main += plp.lpSum(conf_total_rates[c] * conf_weight[c] for c in confs), 'total_throughput_g'
         else:
+            # maximization of the worst throughput
             main += min_throughput, 'min_throughput_g'
 
-        # To access the variables from outside
         main.conf_weight = conf_weight
-
-        # Solve the main problem
         main.solve()
 
-        # Check the status of the optimization problem
         if main.status != plp.LpStatusOptimal:
             raise Exception('Main problem not solved optimally')
 
-        # Results with dual variables and shares
         result = {
             'alpha': main.constraints['conf_weight_c'].pi,
             'beta': {s: main.constraints[f'node_throughput_{s}_c'].pi for s in stations},
