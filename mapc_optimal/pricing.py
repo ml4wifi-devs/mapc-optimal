@@ -1,31 +1,10 @@
-"""
-The pricing algorithm used to propose new configurations for the main problem.
-"""
-
 import pulp as plp
 from numpy.typing import NDArray
 
 
 class Pricing:
     r"""
-    TODO
-
-    Parameters
-    ----------
-    mcs_values : list
-        List of the available MCS values.
-    mcs_data_rates : list
-        List of the data rates corresponding to the available MCS values.
-    min_sinr : NDArray
-        Array containing the minimum SINR values for each MCS value.
-    max_tx_power : float
-        Maximum transmission power of the nodes.
-    min_tx_power : float
-        Minimum transmission power of the nodes.
-    noise_floor : float
-        Mean level of the noise floor in the network.
-    opt_sum : bool
-        If True, the total throughput is optimized, otherwise the worst throughput is optimized.
+    The pricing problem responsible for proposing new configurations for the main problem.
     """
 
     def __init__(
@@ -38,6 +17,25 @@ class Pricing:
             noise_floor: float,
             opt_sum: bool
     ) -> None:
+        r"""
+        Parameters
+        ----------
+        mcs_values : list
+            List of the available MCS values.
+        mcs_data_rates : list
+            List of the data rates corresponding to the available MCS values.
+        min_sinr : NDArray
+            Array containing the minimum SINR values for each MCS value.
+        max_tx_power : float
+            Maximum transmission power of the nodes.
+        min_tx_power : float
+            Minimum transmission power of the nodes.
+        noise_floor : float
+            Mean level of the noise floor in the network.
+        opt_sum : bool
+            If True, the total throughput is optimized, otherwise the worst throughput is optimized.
+        """
+
         self.mcs_values = mcs_values
         self.mcs_data_rates = mcs_data_rates
         self.min_sinr = min_sinr
@@ -115,7 +113,8 @@ class Pricing:
             configuration: dict
     ) -> tuple[dict, float]:
         """
-        TODO
+        Solves the pricing problem given the dual variables of the main problem.
+        Returns all the configurations and the value of the objective function.
 
         Parameters
         ----------

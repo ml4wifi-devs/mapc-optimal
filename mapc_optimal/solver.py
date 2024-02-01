@@ -10,10 +10,12 @@ from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
 
 
 class Solver:
-    """
-    The solver class coordinating the overall process of finding the optimal
-    solution. It initializes the solver, sets up the network configuration,
-    and manages the iterations.
+    r"""
+    The solver class coordinating the overall process of finding the optimal solution.
+    It initializes the solver, sets up the network configuration, and manages the iterations.
+    The optimization problem can be formulated in two ways:
+    - the total throughput of the network is maximized,
+    - the worst throughput of each node is maximized.
 
     Examples
     --------
@@ -218,7 +220,8 @@ class Solver:
             return_objectives: bool = False
     ) -> Union[tuple[dict, float], tuple[dict, float, list[float]]]:
         """
-        TODO
+        Solves the MAPC C-SR problem given the path loss between each pair of nodes in the network.
+        Returns the final configurations, the time shares, and the total throughput.
 
         Parameters
         ----------
