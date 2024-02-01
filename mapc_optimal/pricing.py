@@ -149,6 +149,7 @@ class Pricing:
 
         pricing = plp.LpProblem('pricing', plp.LpMaximize)
 
+        ap_on = plp.LpVariable.dicts('ap_on', access_points, cat=plp.LpBinary)
         link_tx_power = plp.LpVariable.dicts('link_tx_power', links, lowBound=0, cat=plp.LpContinuous)
         link_on = plp.LpVariable.dicts('link_on', links, cat=plp.LpBinary)
         link_mcs = plp.LpVariable.dicts('link_mcs', [(l, m) for l in links for m in self.mcs_values], cat=plp.LpBinary)
@@ -161,12 +162,14 @@ class Pricing:
 
         for a in access_points:
             # AP can simultaneously transmit to at most one station on all of its links
-            pricing += plp.lpSum(link_on[l] for l in links if link_node_a[l] == a) <= 1, f'ap_on_{a}_c'
+            pricing += plp.lpSum(link_on[l] for l in links if link_node_a[l] == a) == ap_on[a], f'ap_on_{a}_c'
 
         for l in links:
+            a, s = link_node_a[l], link_node_b[l]
+
             # if link is on, then node can transmit with power constrained by min/max power
-            pricing += link_tx_power[l] <= self.max_tx_power * link_on[l], f'link_tx_power_max_{l}_c'
-            pricing += link_tx_power[l] >= self.min_tx_power * link_on[l], f'link_tx_power_min_{l}_c'
+            pricing += link_tx_power[l] <= self.max_tx_power * ap_on[a], f'link_tx_power_max_{l}_c'
+            pricing += link_tx_power[l] >= self.min_tx_power * ap_on[a], f'link_tx_power_min_{l}_c'
 
             for m in self.mcs_values:
                 # the way transmission modes are switched on in a link (incremental switching-on)
@@ -177,9 +180,9 @@ class Pricing:
 
                 # interference level in link
                 pricing += link_interference[l, m] == plp.lpSum(
-                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[link_node_a[l_i], link_node_b[l]]) +
+                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[link_node_a[l_i], s]) +
                     self.min_sinr[m] * link_path_loss[l] * self.noise_floor
-                    for l_i in links if link_node_a[l_i] != link_node_a[l]
+                    for l_i in links if link_node_a[l_i] != a
                 ), f'link_interference_{l}_{m}_c1'
 
                 # check whether SINR is high enough for transmission with a given MCS
