@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Optimal solution for IEEE 802.11 MAPC Coordinated Spatial Reuse (C-SR) problem &#8212; mapc_optimal  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=1fe5e9f7" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="optimal-solution-for-ieee-802-11-mapc-coordinated-spatial-reuse-c-sr-problem">
+<h1>Optimal solution for IEEE 802.11 MAPC Coordinated Spatial Reuse (C-SR) problem<a class="headerlink" href="#optimal-solution-for-ieee-802-11-mapc-coordinated-spatial-reuse-c-sr-problem" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">mapc-optimal</span></code> is a tool for finding the optimal solution of the
+Multi-Access Point Coordination (MAPC) scheduling problem with
+coordinated spatial reuse (C-SR) for IEEE 802.11 networks. It provides a
+mixed-integer linear programming (MILP) solution to find the upper bound
+on network performance. A detailed description can be found in:</p>
+<ul class="simple">
+<li><p>TODO</p></li>
+</ul>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Calculation of optimal scheduling</strong>: Calculate the best
+transmission configurations and the corresponding time division that
+enhance the network performance.</p></li>
+<li><p><strong>Two optimization criteria</strong>: Find the optimal solution for two
+optimization criteria: maximizing the sum of the throughput of all
+nodes in the network and maximizing the minimum throughput of all
+nodes in the network.</p></li>
+<li><p><strong>Modulation and coding scheme (MCS) selection</strong>: Select the
+optimal MCS for each transmission.</p></li>
+<li><p><strong>Transmission power selection</strong>: Set the appropriate transmission power
+to maximize network performance.</p></li>
+<li><p><strong>Versatile network configuration</strong>: Define network settings by
+specifying network nodes, available MCSs, and transmission power levels.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<p>The package can be installed using pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mapc-optimal
+</pre></div>
+</div>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
+<p>The main functionality is provided by the <a class="reference internal" href="autoapi/mapc_optimal/index.html#mapc_optimal.Solver" title="mapc_optimal.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">mapc_optimal.Solver</span></code></a> class.
+This class manages the process of finding
+the optimal solution. Example usage:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mapc_optimal</span> <span class="kn">import</span> <span class="n">Solver</span>
+
+<span class="c1"># Define your network</span>
+<span class="c1"># ...</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">stations</span><span class="p">,</span> <span class="n">access_points</span><span class="p">)</span>
+<span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">path_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">stations</span></code> and <code class="docutils literal notranslate"><span class="pre">access_points</span></code> are lists of numbers
+representing the stations and access points (APs) in the network,
+respectively. The <code class="docutils literal notranslate"><span class="pre">path_loss</span></code> is an <span class="math notranslate nohighlight">\(n \times n\)</span> matrix
+representing the path loss between each pair of nodes in the network.
+The solver returns calculated configurations and the total throughput
+of the network. The <a class="reference internal" href="autoapi/mapc_optimal/index.html#mapc_optimal.Solver" title="mapc_optimal.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">mapc_optimal.Solver</span></code></a> class can be further
+configured by passing additional arguments to the constructor.
+The full list of arguments can be found in the documentation.</p>
+<p>Additionally, the solver can return a list of the pricing objective values for each
+iteration. It can be useful to check if the solver has converged. To do so, set the
+<code class="docutils literal notranslate"><span class="pre">return_objective</span></code> argument to <code class="docutils literal notranslate"><span class="pre">True</span></code> when calling the solver.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">objectives</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">path_loss</span><span class="p">,</span> <span class="n">return_objective</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For a more detailed example, refer to the test case in <code class="docutils literal notranslate"><span class="pre">test/test_solver.py</span></code>.</p>
+<p><strong>Note</strong> The underlying MILP solver can significantly affect the performance of the
+tool. By default, the solver uses the <code class="docutils literal notranslate"><span class="pre">CBC</span></code> solver from the <code class="docutils literal notranslate"><span class="pre">PuLP</span></code> package.
+However, we recommend using a better solver, such as <code class="docutils literal notranslate"><span class="pre">CPLEX</span></code>.</p>
+</section>
+<section id="how-to-reference-mapc-optimal">
+<h2>How to reference <code class="docutils literal notranslate"><span class="pre">mapc-optimal</span></code>?<a class="headerlink" href="#how-to-reference-mapc-optimal" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TODO</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">mapc_optimal</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ml4wifi-devs&repo=mapc-optimal&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/ml4wifi-devs/mapc-optimal" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

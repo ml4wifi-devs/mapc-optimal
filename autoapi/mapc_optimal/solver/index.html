@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>mapc_optimal.solver &#8212; mapc_optimal  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=1fe5e9f7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="mapc_optimal.utils" href="../utils/index.html" />
+    <link rel="prev" title="mapc_optimal.pricing" href="../pricing/index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-mapc_optimal.solver">
+<span id="mapc-optimal-solver"></span><h1><a class="reference internal" href="#module-mapc_optimal.solver" title="mapc_optimal.solver"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.solver</span></code></a><a class="headerlink" href="#module-mapc_optimal.solver" title="Link to this heading">¶</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mapc_optimal.solver.Solver" title="mapc_optimal.solver.Solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Solver</span></code></a></p></td>
+<td><p>The solver class coordinating the overall process of finding the optimal solution.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="mapc_optimal.solver.Solver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mapc_optimal.solver.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">len(DATA_RATES)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DATA_RATES</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_snr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_SNRS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MAX_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOISE_FLOOR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_throughput</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_sum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.solver.Solver" title="Link to this definition">¶</a></dt>
+<dd><p>The solver class coordinating the overall process of finding the optimal solution.
+It initializes the solver, sets up the network configuration, and manages the iterations.
+The optimization problem can be formulated in two ways:
+- the total throughput of the network is maximized,
+- the worst throughput of each node is maximized.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mapc_optimal</span> <span class="kn">import</span> <span class="n">Solver</span>
+
+<span class="c1"># Define your network</span>
+<span class="c1"># ...</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">stations</span><span class="p">,</span> <span class="n">access_points</span><span class="p">)</span>
+<span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">path_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The solver requires the path loss between each pair of nodes in the
+network. The reason for this is that the solver should be independent
+of the channel model used. Therefore, the path loss must be
+calculated beforehand. Note that if you do not require a specific
+channel model, you can use the provided function to calculate the
+path loss using the TGax channel model based on the positions of the
+nodes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">mapc_optimal</span> <span class="kn">import</span> <span class="n">position_to_path_loss</span>
+
+<span class="c1"># Positions of the nodes as an array of `x` and `y` coordinates. `i`-th row represents the position</span>
+<span class="c1"># of the node with identifier `i` in the `stations` and `access_points` lists.</span>
+<span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+  <span class="p">[</span><span class="n">x_0</span><span class="p">,</span> <span class="n">y_0</span><span class="p">],</span>
+  <span class="p">[</span><span class="n">x_1</span><span class="p">,</span> <span class="n">y_1</span><span class="p">],</span>
+  <span class="o">...</span>
+  <span class="p">[</span><span class="n">x_n</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">y_n</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="p">])</span>
+
+<span class="c1"># A matrix representing the walls in the environment (1 - wall, 0 - no wall between nodes `i` and `j`).</span>
+<span class="n">walls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+<span class="n">walls</span><span class="p">[</span><span class="n">i_0</span><span class="p">,</span> <span class="n">j_0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">walls</span><span class="p">[</span><span class="n">i_1</span><span class="p">,</span> <span class="n">j_1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="o">...</span>
+<span class="n">walls</span><span class="p">[</span><span class="n">i_m</span><span class="p">,</span> <span class="n">j_m</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1"># n x n matrix representing the path loss between each pair of nodes.</span>
+<span class="n">path_loss</span> <span class="o">=</span> <span class="n">position_to_path_loss</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">walls</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Identifiers of the stations and APs should be unique and
+cover the range from <span class="math notranslate nohighlight">\(0\)</span> to <span class="math notranslate nohighlight">\(n - 1\)</span> (where <span class="math notranslate nohighlight">\(n\)</span> is the
+total number of nodes in the network).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The performance of the solver can significantly depend on the underlying
+mixed-integer linear programming solver. The default one is PULP_CBC,
+which is a free and open-source solver provided by the PuLP library.
+However, we recommend using a better solver, such as CPLEX.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Lists of numbers representing the stations.</p></li>
+<li><p><strong>access_points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Lists of numbers representing the access points (APs) in the network.</p></li>
+<li><p><strong>mcs_values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">12</span></code>) – A number of MCS values available in the network. IEEE 802.11ax values are used by default.</p></li>
+<li><p><strong>mcs_data_rates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <em>default</em> <a class="reference internal" href="../constants/index.html#mapc_optimal.constants.DATA_RATES" title="mapc_optimal.constants.DATA_RATES"><code class="xref py py-class docutils literal notranslate"><span class="pre">mapc_optimal.constants.DATA_RATES</span></code></a>) – A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
+20MHz bandwidth and 800 ns GI data rates by default.</p></li>
+<li><p><strong>min_snr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <em>default</em> <a class="reference internal" href="../constants/index.html#mapc_optimal.constants.MIN_SNRS" title="mapc_optimal.constants.MIN_SNRS"><code class="xref py py-class docutils literal notranslate"><span class="pre">mapc_optimal.constants.MIN_SNRS</span></code></a>) – The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically
+determined in ns-3 simulations by default.</p></li>
+<li><p><strong>max_tx_power</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">20.0</span></code>) – The maximum transmission power (dBm) available.</p></li>
+<li><p><strong>min_tx_power</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">10.0</span></code>) – The minimum transmission power (dBm) that can be used.</p></li>
+<li><p><strong>noise_floor</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">-93.97</span></code>) – The level of noise in the environment (dBm).</p></li>
+<li><p><strong>min_throughput</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">0.0</span></code>) – The minimum throughput required for each node (Mb/s) while maximizing the total throughput.</p></li>
+<li><p><strong>opt_sum</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <em>default</em> <code class="xref py py-obj docutils literal notranslate"><span class="pre">False</span></code>) – A boolean value indicating whether to maximize the sum of the throughput of all nodes in the network
+(<cite>True</cite>) or the minimum throughput of all nodes in the network (<cite>False</cite>).</p></li>
+<li><p><strong>max_iterations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">100</span></code>) – The maximum number of iterations of the solver.</p></li>
+<li><p><strong>epsilon</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">1e-5</span></code>) – The minimum value of the pricing objective function to continue the iterations.</p></li>
+<li><p><strong>solver</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pulp.LpSolver</span></code>, <em>default</em> <code class="xref py py-class docutils literal notranslate"><span class="pre">pulp.PULP_CBC_CMD(msg=False)</span></code>) – The solver used to solve the optimization problems.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="mapc_optimal.solver.Solver.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_objectives</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.solver.Solver.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Solves the MAPC C-SR problem given the path loss between each pair of nodes in the network.
+Returns the final configurations, the time shares, and the total throughput.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_loss</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">NDArray</span></code>) – Matrix containing the path loss between each pair of nodes.</p></li>
+<li><p><strong>return_objectives</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <em>default</em> <code class="xref py py-obj docutils literal notranslate"><span class="pre">False</span></code>) – Flag indicating whether to return the pricing objective values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>result</strong> – Tuple containing the final configurations and the total throughput. Additionally,
+the solver can return a list of the pricing objective values for each iteration.
+It can be useful to check if the solver has converged.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple[dict</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float]</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple[dict</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">list[float]]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mapc_optimal</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ml4wifi-devs&repo=mapc-optimal&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../genindex.html">Index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../constants/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.constants</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../main/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.main</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pricing/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.pricing</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.solver</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#classes">Classes</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#mapc_optimal.solver.Solver"><code class="docutils literal notranslate"><span class="pre">Solver</span></code></a><ul>
+<li class="toctree-l8"><a class="reference internal" href="#mapc_optimal.solver.Solver.__call__"><code class="docutils literal notranslate"><span class="pre">Solver.__call__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">API Reference</a><ul>
+  <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal</span></code></a><ul>
+      <li>Previous: <a href="../pricing/index.html" title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.pricing</span></code></a></li>
+      <li>Next: <a href="../utils/index.html" title="next chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.utils</span></code></a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
+      
+      |
+      <a href="../../../_sources/autoapi/mapc_optimal/solver/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/ml4wifi-devs/mapc-optimal" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

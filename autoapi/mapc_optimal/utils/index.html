@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>mapc_optimal.utils &#8212; mapc_optimal  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=1fe5e9f7" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=eafc0fe6" />
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="prev" title="mapc_optimal.solver" href="../solver/index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-mapc_optimal.utils">
+<span id="mapc-optimal-utils"></span><h1><a class="reference internal" href="#module-mapc_optimal.utils" title="mapc_optimal.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.utils</span></code></a><a class="headerlink" href="#module-mapc_optimal.utils" title="Link to this heading">¶</a></h1>
+<p>Utility functions, including the function for calculation of the path loss from node positions using
+the TGax channel model.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mapc_optimal.utils.dbm_to_lin" title="mapc_optimal.utils.dbm_to_lin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbm_to_lin</span></code></a>(x)</p></td>
+<td><p>Converts dBm to a linear scale.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mapc_optimal.utils.lin_to_dbm" title="mapc_optimal.utils.lin_to_dbm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lin_to_dbm</span></code></a>(x)</p></td>
+<td><p>Converts linear scale to dBm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mapc_optimal.utils.tgax_path_loss" title="mapc_optimal.utils.tgax_path_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tgax_path_loss</span></code></a>(distance, walls)</p></td>
+<td><p>Calculates the path loss according to the TGax channel model <a class="footnote-reference brackets" href="#id3" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mapc_optimal.utils.positions_to_path_loss" title="mapc_optimal.utils.positions_to_path_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">positions_to_path_loss</span></code></a>(pos, walls)</p></td>
+<td><p>Calculates the path loss for all nodes based on their positions and the wall positions.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="mapc_optimal.utils.dbm_to_lin">
+<span class="sig-prename descclassname"><span class="pre">mapc_optimal.utils.</span></span><span class="sig-name descname"><span class="pre">dbm_to_lin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.utils.dbm_to_lin" title="Link to this definition">¶</a></dt>
+<dd><p>Converts dBm to a linear scale.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code>) – Input in dBm.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output in a linear scale.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NDArray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="mapc_optimal.utils.lin_to_dbm">
+<span class="sig-prename descclassname"><span class="pre">mapc_optimal.utils.</span></span><span class="sig-name descname"><span class="pre">lin_to_dbm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.utils.lin_to_dbm" title="Link to this definition">¶</a></dt>
+<dd><p>Converts linear scale to dBm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code>) – Input in a linear scale.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output in dBm.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NDArray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="mapc_optimal.utils.tgax_path_loss">
+<span class="sig-prename descclassname"><span class="pre">mapc_optimal.utils.</span></span><span class="sig-name descname"><span class="pre">tgax_path_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">walls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.utils.tgax_path_loss" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates the path loss according to the TGax channel model <a class="footnote-reference brackets" href="#id3" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code>) – Distance between nodes.</p></li>
+<li><p><strong>walls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code>) – Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Two dimensional array of path losses (dB) between all nodes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code></p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id3" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<p><a class="reference external" href="https://www.ieee802.org/11/Reports/tgax_update.htm#:~:text=TGax%20Selection%20Procedure-,11%2D14%2D0980,-TGax%20Simulation%20Scenarios">https://www.ieee802.org/11/Reports/tgax_update.htm#:~:text=TGax%20Selection%20Procedure-,11%2D14%2D0980,-TGax%20Simulation%20Scenarios</a></p>
+</aside>
+</aside>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="mapc_optimal.utils.positions_to_path_loss">
+<span class="sig-prename descclassname"><span class="pre">mapc_optimal.utils.</span></span><span class="sig-name descname"><span class="pre">positions_to_path_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">walls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.utils.positions_to_path_loss" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates the path loss for all nodes based on their positions and the wall positions.
+Channel is modeled using the TGax path loss model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pos</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code>) – Two dimensional array of node positions. Each row corresponds to X and Y coordinates of a node.</p></li>
+<li><p><strong>walls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">array_like</span></code>) – Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Two-dimensional array of path losses (dB) between all nodes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">NDArray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">mapc_optimal</a></h1>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=ml4wifi-devs&repo=mapc-optimal&type=watch&count=true&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../genindex.html">Index</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../constants/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.constants</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../main/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.main</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../pricing/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.pricing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../solver/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.solver</span></code></a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.utils</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#module-contents">Module Contents</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="#functions">Functions</a><ul>
+<li class="toctree-l7"><a class="reference internal" href="#mapc_optimal.utils.dbm_to_lin"><code class="docutils literal notranslate"><span class="pre">dbm_to_lin()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#mapc_optimal.utils.lin_to_dbm"><code class="docutils literal notranslate"><span class="pre">lin_to_dbm()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#mapc_optimal.utils.tgax_path_loss"><code class="docutils literal notranslate"><span class="pre">tgax_path_loss()</span></code></a></li>
+<li class="toctree-l7"><a class="reference internal" href="#mapc_optimal.utils.positions_to_path_loss"><code class="docutils literal notranslate"><span class="pre">positions_to_path_loss()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">API Reference</a><ul>
+  <li><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal</span></code></a><ul>
+      <li>Previous: <a href="../solver/index.html" title="previous chapter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mapc_optimal.solver</span></code></a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
+      
+      |
+      <a href="../../../_sources/autoapi/mapc_optimal/utils/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/ml4wifi-devs/mapc-optimal" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

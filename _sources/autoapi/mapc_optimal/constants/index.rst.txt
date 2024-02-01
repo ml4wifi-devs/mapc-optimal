@@ -1,0 +1,65 @@
+:py:mod:`mapc_optimal.constants`
+================================
+
+.. py:module:: mapc_optimal.constants
+
+.. autoapi-nested-parse::
+
+   Default values of the parameters used in the solver.
+
+
+
+Module Contents
+---------------
+
+.. py:data:: MAX_TX_POWER
+   :value: 20.0
+
+   Physical constant (dBm)
+
+.. py:data:: MIN_TX_POWER
+   :value: 10.0
+
+   Physical constant (dBm)
+
+.. py:data:: NOISE_FLOOR
+
+   Physical constant (dBm)
+   https://www.nsnam.org/docs/models/html/wifi-testing.html#packet-error-rate-performance
+
+.. py:data:: CENTRAL_FREQUENCY
+   :value: 5.16
+
+   Simulation parameter (GHz)
+   https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/n/ac/ax)
+
+.. py:data:: WALL_LOSS
+   :value: 7.0
+
+   Simulation parameter (dB)
+
+.. py:data:: BREAKING_POINT
+   :value: 10.0
+
+   TGax channel model parameter (m)
+   https://mentor.ieee.org/802.11/dcn/14/11-14-0980-16-00ax-simulation-scenarios.docx (p. 19)
+
+.. py:data:: REFERENCE_DISTANCE
+   :value: 1.0
+
+   TGax channel model parameter (m)
+
+.. py:data:: DATA_RATES
+   :value: [8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2]
+
+   Data rates for IEEE 802.11ax standard, 20 MHz channel width, 1 spatial stream, and 800 ns GI (Mb/s)
+
+.. py:data:: MEAN_SNRS
+
+   Parameters of the success probability curves - cdf of the normal distribution with standard deviation of 2
+   (derived from ns-3 simulations)
+
+.. py:data:: MIN_SNRS
+
+   Minimal SNR values for each MCS (dB) to obtain 99.9% success probability
+

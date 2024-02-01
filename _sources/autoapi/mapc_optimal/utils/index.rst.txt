@@ -1,0 +1,81 @@
+:py:mod:`mapc_optimal.utils`
+============================
+
+.. py:module:: mapc_optimal.utils
+
+.. autoapi-nested-parse::
+
+   Utility functions, including the function for calculation of the path loss from node positions using
+   the TGax channel model.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   mapc_optimal.utils.dbm_to_lin
+   mapc_optimal.utils.lin_to_dbm
+   mapc_optimal.utils.tgax_path_loss
+   mapc_optimal.utils.positions_to_path_loss
+
+
+
+.. py:function:: dbm_to_lin(x)
+
+   Converts dBm to a linear scale.
+
+   :param x: Input in dBm.
+   :type x: :class:`array_like`
+
+   :returns: Output in a linear scale.
+   :rtype: :class:`NDArray`
+
+
+.. py:function:: lin_to_dbm(x)
+
+   Converts linear scale to dBm.
+
+   :param x: Input in a linear scale.
+   :type x: :class:`array_like`
+
+   :returns: Output in dBm.
+   :rtype: :class:`NDArray`
+
+
+.. py:function:: tgax_path_loss(distance, walls)
+
+   Calculates the path loss according to the TGax channel model [1]_.
+
+   :param distance: Distance between nodes.
+   :type distance: :class:`array_like`
+   :param walls: Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
+   :type walls: :class:`array_like`
+
+   :returns: Two dimensional array of path losses (dB) between all nodes.
+   :rtype: :class:`array_like`
+
+   .. rubric:: References
+
+   .. [1] https://www.ieee802.org/11/Reports/tgax_update.htm#:~:text=TGax%20Selection%20Procedure-,11%2D14%2D0980,-TGax%20Simulation%20Scenarios
+
+
+.. py:function:: positions_to_path_loss(pos, walls)
+
+   Calculates the path loss for all nodes based on their positions and the wall positions.
+   Channel is modeled using the TGax path loss model.
+
+   :param pos: Two dimensional array of node positions. Each row corresponds to X and Y coordinates of a node.
+   :type pos: :class:`array_like`
+   :param walls: Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
+   :type walls: :class:`array_like`
+
+   :returns: Two-dimensional array of path losses (dB) between all nodes.
+   :rtype: :class:`NDArray`
+
+
