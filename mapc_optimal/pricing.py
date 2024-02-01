@@ -15,7 +15,8 @@ class Pricing:
             max_tx_power: float,
             min_tx_power: float,
             noise_floor: float,
-            opt_sum: bool
+            opt_sum: bool,
+            solver: plp.LpSolver
     ) -> None:
         r"""
         Parameters
@@ -34,6 +35,8 @@ class Pricing:
             Mean level of the noise floor in the network.
         opt_sum : bool
             If True, the total throughput is optimized, otherwise the worst throughput is optimized.
+        solver : pulp.LpSolver
+            Solver used to solve the pricing problem.
         """
 
         self.mcs_values = mcs_values
@@ -44,6 +47,7 @@ class Pricing:
         self.min_tx_power = min_tx_power
         self.noise_floor = noise_floor
         self.opt_sum = opt_sum
+        self.solver = solver
 
     def _best_rate(self, path_loss: float) -> float:
         """
@@ -208,7 +212,8 @@ class Pricing:
         pricing.link_on = link_on
         pricing.link_data_rate = link_data_rate
         pricing.link_tx_power = link_tx_power
-        pricing.solve()
+
+        pricing.solve(self.solver)
 
         if pricing.status != plp.LpStatusOptimal:
             raise Exception('Pricing problem not solved optimally')

@@ -4,7 +4,7 @@ Optimal solution for IEEE 802.11 MAPC Coordinated Spatial Reuse (C-SR) problem
 ``mapc-optimal`` is a tool for finding the optimal solution of the
 Multi-Access Point Coordination (MAPC) scheduling problem with
 coordinated spatial reuse (C-SR) for IEEE 802.11 networks. It provides a
-mixed-integer linear programming solution to find the upper bound
+mixed-integer linear programming (MILP) solution to find the upper bound
 on network performance. A detailed description can be found in:
 
 -  TODO
@@ -62,10 +62,10 @@ cover the range from :math:`0` to :math:`n - 1` (where :math:`n` is the
 total number of nodes in the network). The ``path_loss`` is an
 :math:`n \times n` matrix representing the path loss between each pair
 of nodes in the network. The solver returns calculated configurations
-and the corresponding total throughput of the network.
-
-The :class:`mapc_optimal.Solver`  class can be further configured by passing additional
-arguments to the constructor. Full list of arguments can be found in the documentation.
+and the corresponding total throughput of the network. The
+:class:`mapc_optimal.Solver`  class can be further configured by passing
+additional arguments to the constructor. Full list of arguments can be
+found in the documentation.
 
 Additionally, the solver can return a list of the pricing objective values for each
 iteration. It can be useful to check if the solver has converged. To do so, set the
@@ -76,6 +76,10 @@ iteration. It can be useful to check if the solver has converged. To do so, set 
    configurations, rate, objectives = solver(path_loss, return_objective=True)
 
 For a more detailed example, refer to the test case in ``test/test_solver.py``.
+
+**Note** The underlying MILP solver can significantly affect the performance of the
+tool. By default, the solver uses the ``CBC`` solver from the ``PuLP`` package.
+However, we recommend using a better solver, such as ``CPLEX``.
 
 
 How to reference ``mapc-optimal``?

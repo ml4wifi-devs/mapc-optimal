@@ -1,6 +1,7 @@
 from itertools import product
 from typing import Union
 
+import pulp as plp
 from numpy.typing import NDArray
 
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
@@ -79,13 +80,20 @@ class Solver:
             min_throughput: float = 0.,
             opt_sum: bool = False,
             max_iterations: int = 100,
-            epsilon: float = 1e-5
+            epsilon: float = 1e-5,
+            solver: plp.LpSolver = None
     ) -> None:
         r"""
         .. note::
             Identifiers of the stations and APs should be unique and
             cover the range from :math:`0` to :math:`n - 1` (where :math:`n` is the
             total number of nodes in the network).
+
+        .. note::
+            The performance of the solver can significantly depend on the underlying
+            mixed-integer linear programming solver. The default one is PULP_CBC,
+            which is a free and open-source solver provided by the PuLP library.
+            However, we recommend using a better solver, such as CPLEX.
 
         Parameters
         ----------
@@ -116,6 +124,8 @@ class Solver:
             The maximum number of iterations of the solver.
         epsilon: float, default=1e-5
              The minimum value of the pricing objective function to continue the iterations.
+        solver: pulp.LpSolver, default=pulp.PULP_CBC_CMD(msg=False)
+            The solver used to solve the optimization problems.
         """
 
         self.stations = stations
@@ -130,10 +140,12 @@ class Solver:
         self.opt_sum = opt_sum
         self.max_iterations = max_iterations
         self.epsilon = epsilon
+        self.solver = solver or plp.PULP_CBC_CMD(msg=False)
 
         self.main = Main(
             min_throughput=self.min_throughput,
-            opt_sum=self.opt_sum
+            opt_sum=self.opt_sum,
+            solver=self.solver
         )
         self.pricing = Pricing(
             mcs_values=self.mcs_values,
@@ -142,7 +154,8 @@ class Solver:
             max_tx_power=self.max_tx_power,
             min_tx_power=self.min_tx_power,
             noise_floor=self.noise_floor,
-            opt_sum=self.opt_sum
+            opt_sum=self.opt_sum,
+            solver=self.solver
         )
 
     def _tx_possible(self, path_loss: float) -> bool:
