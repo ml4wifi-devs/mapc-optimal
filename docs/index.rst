@@ -22,7 +22,7 @@ Features
    nodes in the network.
 -  **Modulation and coding scheme (MCS) selection**: Select the
    optimal MCS for each transmission.
--  **Transmission power selection**: Set the appropriate transmit power
+-  **Transmission power selection**: Set the appropriate transmission power
    to maximize network performance.
 -  **Versatile network configuration**: Define network settings by
    specifying network nodes, available MCSs, and transmission power levels.
@@ -57,15 +57,12 @@ the optimal solution. Example usage:
 
 where ``stations`` and ``access_points`` are lists of numbers
 representing the stations and access points (APs) in the network,
-respectively. Identifiers of the stations and APs should be unique and
-cover the range from :math:`0` to :math:`n - 1` (where :math:`n` is the
-total number of nodes in the network). The ``path_loss`` is an
-:math:`n \times n` matrix representing the path loss between each pair
-of nodes in the network. The solver returns calculated configurations
-and the corresponding total throughput of the network. The
-:class:`mapc_optimal.Solver`  class can be further configured by passing
-additional arguments to the constructor. Full list of arguments can be
-found in the documentation.
+respectively. The ``path_loss`` is an :math:`n \times n` matrix
+representing the path loss between each pair of nodes in the network.
+The solver returns calculated configurations and the total throughput
+of the network. The :class:`mapc_optimal.Solver` class can be further
+configured by passing additional arguments to the constructor.
+The full list of arguments can be found in the documentation.
 
 Additionally, the solver can return a list of the pricing objective values for each
 iteration. It can be useful to check if the solver has converged. To do so, set the
