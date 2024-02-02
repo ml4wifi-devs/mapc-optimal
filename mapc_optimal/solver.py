@@ -72,8 +72,8 @@ class Solver:
             stations: list,
             access_points: list,
             mcs_values: int = len(DATA_RATES),
-            mcs_data_rates: list = DATA_RATES,
-            min_snr: list = MIN_SNRS,
+            mcs_data_rates: NDArray = DATA_RATES,
+            min_snr: NDArray = MIN_SNRS,
             max_tx_power: float = MAX_TX_POWER,
             min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
@@ -103,10 +103,10 @@ class Solver:
             Lists of numbers representing the access points (APs) in the network.
         mcs_values: int, default=12
             A number of MCS values available in the network. IEEE 802.11ax values are used by default.
-        mcs_data_rates: list, default=mapc_optimal.constants.DATA_RATES
+        mcs_data_rates: NDArray, default=mapc_optimal.constants.DATA_RATES
             A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
             20MHz bandwidth and 800 ns GI data rates by default.
-        min_snr: list, default=mapc_optimal.constants.MIN_SNRS
+        min_snr: NDArray, default=mapc_optimal.constants.MIN_SNRS
             The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically 
             determined in ns-3 simulations by default.
         max_tx_power: float, default=20.0

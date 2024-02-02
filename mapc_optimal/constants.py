@@ -40,5 +40,5 @@ MEAN_SNRS = np.array([
 r"""Parameters of the success probability curves - cdf of the normal distribution with standard deviation of 2
 (derived from ns-3 simulations)"""
 
-MIN_SNRS = MEAN_SNRS + 6.1804724
-r"""Minimal SNR values for each MCS (dB) to obtain 99.9% success probability"""
+MIN_SNRS = MEAN_SNRS + 3.289707
+r"""Minimal SNR values for each MCS (dB) to obtain 95% success probability"""
