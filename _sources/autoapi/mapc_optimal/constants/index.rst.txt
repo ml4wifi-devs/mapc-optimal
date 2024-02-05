@@ -61,5 +61,5 @@ Module Contents
 
 .. py:data:: MIN_SNRS
 
-   Minimal SNR values for each MCS (dB) to obtain 99.9% success probability
+   Minimal SNR values for each MCS (dB) to obtain 95% success probability
 

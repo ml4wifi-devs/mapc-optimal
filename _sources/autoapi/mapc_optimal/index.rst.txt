@@ -112,10 +112,10 @@ Functions
    :type mcs_values: :class:`int`, *default* ``12``
    :param mcs_data_rates: A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
                           20MHz bandwidth and 800 ns GI data rates by default.
-   :type mcs_data_rates: :class:`list`, *default* :class:`mapc_optimal.constants.DATA_RATES`
+   :type mcs_data_rates: :class:`NDArray`, *default* :class:`mapc_optimal.constants.DATA_RATES`
    :param min_snr: The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically
                    determined in ns-3 simulations by default.
-   :type min_snr: :class:`list`, *default* :class:`mapc_optimal.constants.MIN_SNRS`
+   :type min_snr: :class:`NDArray`, *default* :class:`mapc_optimal.constants.MIN_SNRS`
    :param max_tx_power: The maximum transmission power (dBm) available.
    :type max_tx_power: :class:`float`, *default* ``20.0``
    :param min_tx_power: The minimum transmission power (dBm) that can be used.
