@@ -175,7 +175,7 @@ class Solver:
         
         return self.max_tx_power >= self.min_sinr[0] * path_loss * self.noise_floor
 
-    def _generate_data(self, path_loss: NDArray) -> dict:
+    def _generate_data(self, path_loss: NDArray, associations: dict = None) -> dict:
         """
         Generates the data required for the solver, such as the links, the stations, and the access points
         in the network, the path loss between each pair of nodes, and the maximum interference level.
@@ -184,6 +184,8 @@ class Solver:
         ----------
         path_loss : NDArray
             Matrix containing the path loss between each pair of nodes.
+        associations : dict
+            The dictionary of associations between APs and stations.
 
         Returns
         -------
@@ -193,17 +195,23 @@ class Solver:
 
         links = []
 
-        for s in self.stations:
-            best_pl = float('inf')
-            best_ap = None
+        if associations is None:
+            for s in self.stations:
+                best_pl = float('inf')
+                best_ap = None
 
-            for a in self.access_points:
-                if path_loss[a, s] < best_pl:
-                    best_pl = path_loss[a, s]
-                    best_ap = a
+                for a in self.access_points:
+                    if path_loss[a, s] < best_pl:
+                        best_pl = path_loss[a, s]
+                        best_ap = a
 
-            if self._tx_possible(best_pl):
-                links.append((f'AP_{best_ap}', f'STA_{s}'))
+                if self._tx_possible(best_pl):
+                    links.append((f'AP_{best_ap}', f'STA_{s}'))
+        else:
+            for a, stations in associations.items():
+                for s in stations:
+                    if self._tx_possible(path_loss[a, s]):
+                        links.append((f'AP_{a}', f'STA_{s}'))
 
         problem_data = {
             'stations': [f'STA_{s}' for s in self.stations],
@@ -229,7 +237,8 @@ class Solver:
 
     def __call__(
             self, 
-            path_loss: NDArray, 
+            path_loss: NDArray,
+            associations: dict = None,
             return_objectives: bool = False
     ) -> Union[tuple[dict, float], tuple[dict, float, list[float]]]:
         """
@@ -240,6 +249,8 @@ class Solver:
         ----------
         path_loss : NDArray
             Matrix containing the path loss between each pair of nodes.
+        associations : dict
+            The dictionary of associations between APs and stations.
         return_objectives : bool, default=False
             Flag indicating whether to return the pricing objective values.
 
@@ -252,7 +263,7 @@ class Solver:
         """
 
         path_loss = dbm_to_lin(path_loss)
-        problem_data = self._generate_data(path_loss)
+        problem_data = self._generate_data(path_loss, associations)
 
         if len(problem_data['links']) == 0:
             if return_objectives:
