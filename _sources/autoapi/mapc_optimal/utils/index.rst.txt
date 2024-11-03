@@ -1,5 +1,5 @@
-:py:mod:`mapc_optimal.utils`
-============================
+mapc_optimal.utils
+==================
 
 .. py:module:: mapc_optimal.utils
 
@@ -10,12 +10,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -25,6 +21,8 @@ Functions
    mapc_optimal.utils.positions_to_path_loss
 
 
+Module Contents
+---------------
 
 .. py:function:: dbm_to_lin(x)
 

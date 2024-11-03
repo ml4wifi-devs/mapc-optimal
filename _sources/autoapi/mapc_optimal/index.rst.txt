@@ -1,45 +1,42 @@
-:py:mod:`mapc_optimal`
-======================
+mapc_optimal
+============
 
 .. py:module:: mapc_optimal
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   constants/index.rst
-   main/index.rst
-   pricing/index.rst
-   solver/index.rst
-   utils/index.rst
+   /autoapi/mapc_optimal/constants/index
+   /autoapi/mapc_optimal/main/index
+   /autoapi/mapc_optimal/pricing/index
+   /autoapi/mapc_optimal/solver/index
+   /autoapi/mapc_optimal/utils/index
 
-
-Package Contents
-----------------
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    mapc_optimal.Solver
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    mapc_optimal.positions_to_path_loss
 
 
+Package Contents
+----------------
 
 .. py:class:: Solver(stations, access_points, mcs_values = len(DATA_RATES), mcs_data_rates = DATA_RATES, min_snr = MIN_SNRS, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, min_throughput = 0.0, opt_sum = False, max_iterations = 100, epsilon = 1e-05, solver = None)
-
 
    The solver class coordinating the overall process of finding the optimal solution.
    It initializes the solver, sets up the network configuration, and manages the iterations.
@@ -134,13 +131,61 @@ Functions
    :param solver: The solver used to solve the optimization problems.
    :type solver: :class:`pulp.LpSolver`, *default* :class:`pulp.PULP_CBC_CMD(msg=False)`
 
-   .. py:method:: __call__(path_loss, return_objectives = False)
+
+   .. py:attribute:: stations
+
+
+   .. py:attribute:: access_points
+
+
+   .. py:attribute:: mcs_values
+
+
+   .. py:attribute:: mcs_data_rates
+
+
+   .. py:attribute:: min_sinr
+
+
+   .. py:attribute:: max_tx_power
+
+
+   .. py:attribute:: min_tx_power
+
+
+   .. py:attribute:: noise_floor
+
+
+   .. py:attribute:: min_throughput
+
+
+   .. py:attribute:: opt_sum
+
+
+   .. py:attribute:: max_iterations
+
+
+   .. py:attribute:: epsilon
+
+
+   .. py:attribute:: solver
+
+
+   .. py:attribute:: main
+
+
+   .. py:attribute:: pricing
+
+
+   .. py:method:: __call__(path_loss, associations = None, return_objectives = False)
 
       Solves the MAPC C-SR problem given the path loss between each pair of nodes in the network.
       Returns the final configurations, the time shares, and the total throughput.
 
       :param path_loss: Matrix containing the path loss between each pair of nodes.
       :type path_loss: :class:`NDArray`
+      :param associations: The dictionary of associations between APs and stations.
+      :type associations: :class:`dict`
       :param return_objectives: Flag indicating whether to return the pricing objective values.
       :type return_objectives: :class:`bool`, *default* :obj:`False`
 
