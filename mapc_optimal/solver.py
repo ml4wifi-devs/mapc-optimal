@@ -1,13 +1,14 @@
 from itertools import product
 from typing import Union
 
+import numpy as np
 import pulp as plp
 from numpy.typing import NDArray
 
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
 from mapc_optimal.main import Main
 from mapc_optimal.pricing import Pricing
-from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
+from mapc_optimal.utils import OptimizationType, dbm_to_lin, lin_to_dbm
 
 
 class Solver:
@@ -78,8 +79,9 @@ class Solver:
             min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
             min_throughput: float = 0.,
-            opt_sum: bool = False,
+            opt_type: OptimizationType = OptimizationType.PROPORTIONAL,
             max_iterations: int = 100,
+            log_segments: int = 10,
             epsilon: float = 1e-5,
             solver: plp.LpSolver = None
     ) -> None:
@@ -117,11 +119,12 @@ class Solver:
             The level of noise in the environment (dBm).
         min_throughput: float, default=0.0
             The minimum throughput required for each node (Mb/s) while maximizing the total throughput.
-        opt_sum: bool, default=False
-            A boolean value indicating whether to maximize the sum of the throughput of all nodes in the network
-            (`True`) or the minimum throughput of all nodes in the network (`False`).
+        opt_type: OptimizationType, default=OptimizationType.PROPORTIONAL
+            The type of optimization problem to solve. The proportional fairness problem is solved by default.
         max_iterations: int, default=100
             The maximum number of iterations of the solver.
+        log_segments: int, default=10
+            The number of linear function segments used to approximate the logarithm function in proportional fairness setting.
         epsilon: float, default=1e-5
              The minimum value of the pricing objective function to continue the iterations.
         solver: pulp.LpSolver, default=pulp.PULP_CBC_CMD(msg=False)
@@ -137,14 +140,16 @@ class Solver:
         self.min_tx_power = dbm_to_lin(min_tx_power).item()
         self.noise_floor = dbm_to_lin(noise_floor).item()
         self.min_throughput = min_throughput
-        self.opt_sum = opt_sum
+        self.opt_type = opt_type
         self.max_iterations = max_iterations
+        self.log_approx = self._linearize_log(log_segments)
         self.epsilon = epsilon
         self.solver = solver or plp.PULP_CBC_CMD(msg=False)
 
         self.main = Main(
             min_throughput=self.min_throughput,
-            opt_sum=self.opt_sum,
+            log_approx=self.log_approx,
+            opt_type=self.opt_type,
             solver=self.solver
         )
         self.pricing = Pricing(
@@ -154,9 +159,41 @@ class Solver:
             max_tx_power=self.max_tx_power,
             min_tx_power=self.min_tx_power,
             noise_floor=self.noise_floor,
-            opt_sum=self.opt_sum,
+            log_approx=self.log_approx,
+            opt_type=self.opt_type,
             solver=self.solver
         )
+
+    @staticmethod
+    def _linearize_log(k: int, min_val: float = -3, max_val: float = 3) -> tuple[NDArray, NDArray]:
+        """
+        Linearizes the logarithm function by approximating it with a piecewise linear function.
+
+        Parameters
+        ----------
+        k : int
+            Number of segments used to approximate the logarithm function.
+        min_val : float, default=-3
+            Minimum value of the logarithm. Note! The value is in the log10 scale.
+        max_val : float, default=3
+            Maximum value of the logarithm. Note! The value is in the log10 scale.
+
+        Returns
+        -------
+        slopes, biases : tuple[NDArray, NDArray]
+            Arrays containing the slopes and biases of the linear functions.
+        """
+
+        xs = np.logspace(min_val, max_val, k + 1, base=10)
+        ys = np.log10(xs)
+
+        xs1, xs2 = xs[:-1], xs[1:]
+        ys1, ys2 = ys[:-1], ys[1:]
+
+        slopes = (ys2 - ys1) / (xs2 - xs1)
+        biases = ys1 - xs1 * slopes
+
+        return slopes, biases
 
     def _tx_possible(self, path_loss: float) -> bool:
         """

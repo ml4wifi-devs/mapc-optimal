@@ -3,10 +3,18 @@ Utility functions, including the function for calculation of the path loss from 
 the TGax channel model.
 """
 
+from enum import Enum, auto
+
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 
 from mapc_optimal.constants import BREAKING_POINT, CENTRAL_FREQUENCY, REFERENCE_DISTANCE, WALL_LOSS
+
+
+class OptimizationType(Enum):
+    SUM = auto()
+    MAX_MIN = auto()
+    PROPORTIONAL = auto()
 
 
 def dbm_to_lin(x: ArrayLike) -> NDArray:
