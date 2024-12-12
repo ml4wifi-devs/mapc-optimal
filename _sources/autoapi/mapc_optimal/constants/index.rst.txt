@@ -42,6 +42,8 @@ Module Contents
    Physical constant (dBm)
 
 .. py:data:: NOISE_FLOOR
+   :value: -93.97
+
 
    Physical constant (dBm)
    https://www.nsnam.org/docs/models/html/wifi-testing.html#packet-error-rate-performance

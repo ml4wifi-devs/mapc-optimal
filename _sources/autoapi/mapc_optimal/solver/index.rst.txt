@@ -121,6 +121,8 @@ Module Contents
 
 
    .. py:attribute:: mcs_data_rates
+      :value: [8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2]
+
 
 
    .. py:attribute:: min_sinr
@@ -136,15 +138,23 @@ Module Contents
 
 
    .. py:attribute:: min_throughput
+      :value: 0.0
+
 
 
    .. py:attribute:: opt_sum
+      :value: False
+
 
 
    .. py:attribute:: max_iterations
+      :value: 100
+
 
 
    .. py:attribute:: epsilon
+      :value: 1e-05
+
 
 
    .. py:attribute:: solver
