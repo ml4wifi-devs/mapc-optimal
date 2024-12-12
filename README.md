@@ -4,7 +4,7 @@
 problem with coordinated spatial reuse (C-SR) for IEEE 802.11 networks. It provides a mixed-integer linear programming
 (MILP) solution to find the upper bound on network performance. A detailed description can be found in:
 
-- TODO
+- Maksymilian Wojnar, Wojciech Ciężobka, Artur Tomaszewski, Piotr Chołda, Krzysztof Rusek, Katarzyna Kosek-Szott, Jetmir Haxhibeqiri, Jeroen Hoebeke, Boris Bellalta, Anatolij Zubow, Falko Dressler, and Szymon Szott. "Coordinated Spatial Reuse Scheduling With Machine Learning in IEEE 802.11 MAPC Networks", 2025.
 
 ## Features
 
@@ -46,11 +46,13 @@ in the network. The solver returns calculated configurations and the total throu
 class can be further configured by passing additional arguments to the constructor. The full list of arguments can 
 be found in the [documentation](...). 
 
+By default, the solver associates APs with the stations that have the highest signal strength. However, the solver can
+be configured to use a different association policy. To do so, set the `associations` argument when calling the solver. 
 Additionally, the solver can return a list of the pricing objective values for each iteration. It can be useful to 
-check if the solver has converged. To do so, set the `return_objective` argument to `True` when calling the solver.
+check if the solver has converged. To do so, set the `return_objective` argument to `True` when calling the solver:
 
 ```python
-configurations, rate, objectives = solver(path_loss, return_objective=True)
+configurations, rate, objectives = solver(path_loss, associations, return_objective=True)
 ```
 
 For a more detailed example, refer to the test case in `test/test_solver.py`.
@@ -75,5 +77,9 @@ The repository is structured as follows:
 ## How to reference `mapc-optimal`?
 
 ```
-TODO
+@article{wojnar2025coordinated,
+  author={Wojnar, Maksymilian and Ciężobka, Wojciech and Tomaszewski, Artur and Chołda, Piotr and Rusek, Krzysztof and Kosek-Szott, Katarzyna and Haxhibeqiri, Jetmir and Hoebeke, Jeroen and Bellalta, Boris and Zubow, Anatolij and Dressler, Falko and Szott, Szymon},
+  title={{Coordinated Spatial Reuse Scheduling With Machine Learning in IEEE 802.11 MAPC Networks}}, 
+  year={2025},
+}
 ```
