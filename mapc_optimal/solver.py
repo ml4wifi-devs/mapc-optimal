@@ -165,7 +165,7 @@ class Solver:
         )
 
     @staticmethod
-    def _linearize_log(k: int, min_val: float = -3, max_val: float = 3) -> tuple[NDArray, NDArray]:
+    def _linearize_log(k: int, min_val: float = 0, max_val: float = 3) -> tuple[NDArray, NDArray]:
         """
         Linearizes the logarithm function by approximating it with a piecewise linear function.
 
@@ -173,7 +173,7 @@ class Solver:
         ----------
         k : int
             Number of segments used to approximate the logarithm function.
-        min_val : float, default=-3
+        min_val : float, default=0
             Minimum value of the logarithm. Note! The value is in the log10 scale.
         max_val : float, default=3
             Maximum value of the logarithm. Note! The value is in the log10 scale.
