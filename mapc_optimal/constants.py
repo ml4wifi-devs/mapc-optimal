@@ -15,20 +15,6 @@ NOISE_FLOOR = -93.97
 r"""Physical constant (dBm)  
 https://www.nsnam.org/docs/models/html/wifi-testing.html#packet-error-rate-performance"""
 
-CENTRAL_FREQUENCY = 5.160
-r"""Simulation parameter (GHz) 
-https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/n/ac/ax)"""
-
-WALL_LOSS = 7.
-r"""Simulation parameter (dB)"""
-
-BREAKING_POINT = 10.
-r"""TGax channel model parameter (m) 
-https://mentor.ieee.org/802.11/dcn/14/11-14-0980-16-00ax-simulation-scenarios.docx (p. 19)"""
-
-REFERENCE_DISTANCE = 1.
-r"""TGax channel model parameter (m)"""
-
 DATA_RATES = [8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2]
 r"""Data rates for IEEE 802.11ax standard, 20 MHz channel width, 1 spatial stream, and 800 ns GI (Mb/s)"""
 

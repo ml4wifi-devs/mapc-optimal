@@ -3,10 +3,10 @@ Utility functions, including the function for calculation of the path loss from 
 the TGax channel model.
 """
 
+from typing import Callable
+
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
-
-from mapc_optimal.constants import BREAKING_POINT, CENTRAL_FREQUENCY, REFERENCE_DISTANCE, WALL_LOSS
 
 
 def dbm_to_lin(x: ArrayLike) -> NDArray:
@@ -45,6 +45,17 @@ def lin_to_dbm(x: ArrayLike) -> NDArray:
     return 10. * np.log10(x)
 
 
+r"""
+TGax channel model parameters 
+https://mentor.ieee.org/802.11/dcn/14/11-14-0980-16-00ax-simulation-scenarios.docx (p. 19)
+https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/n/ac/ax)
+"""
+CENTRAL_FREQUENCY = 5.160
+WALL_LOSS = 7.
+BREAKING_POINT = 10.
+REFERENCE_DISTANCE = 1.
+
+
 def tgax_path_loss(distance: ArrayLike, walls: ArrayLike) -> NDArray:
     r"""
     Calculates the path loss according to the TGax channel model [1]_.
@@ -71,7 +82,7 @@ def tgax_path_loss(distance: ArrayLike, walls: ArrayLike) -> NDArray:
             (distance > BREAKING_POINT) * 35 * np.log10(distance / BREAKING_POINT) + WALL_LOSS * walls)
 
 
-def positions_to_path_loss(pos: ArrayLike, walls: ArrayLike) -> NDArray:
+def positions_to_path_loss(pos: ArrayLike, walls: ArrayLike, path_loss_fn: Callable = tgax_path_loss) -> NDArray:
     """
     Calculates the path loss for all nodes based on their positions and the wall positions.
     Channel is modeled using the TGax path loss model.
@@ -82,6 +93,11 @@ def positions_to_path_loss(pos: ArrayLike, walls: ArrayLike) -> NDArray:
         Two dimensional array of node positions. Each row corresponds to X and Y coordinates of a node.
     walls : array_like
         Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
+    path_loss_fn: Callable
+        A function that calculates the path loss between two nodes. The function signature should be
+        `path_loss_fn(distance: Array, walls: Array) -> Array`, where `distance` is the matrix of distances
+        between nodes and `walls` is the adjacency matrix of walls. By default, the simulator uses the
+        residential TGax path loss model.
 
     Returns
     -------
@@ -90,4 +106,4 @@ def positions_to_path_loss(pos: ArrayLike, walls: ArrayLike) -> NDArray:
     """
 
     distance = np.sqrt(np.sum((pos[:, None, :] - pos[None, ...]) ** 2, axis=-1))
-    return tgax_path_loss(distance, walls)
+    return path_loss_fn(distance, walls)
