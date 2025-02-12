@@ -206,7 +206,7 @@ Package Contents
 
 
 
-.. py:function:: positions_to_path_loss(pos, walls)
+.. py:function:: positions_to_path_loss(pos, walls, path_loss_fn = tgax_path_loss)
 
    Calculates the path loss for all nodes based on their positions and the wall positions.
    Channel is modeled using the TGax path loss model.
@@ -215,6 +215,11 @@ Package Contents
    :type pos: :class:`array_like`
    :param walls: Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
    :type walls: :class:`array_like`
+   :param path_loss_fn: A function that calculates the path loss between two nodes. The function signature should be
+                        `path_loss_fn(distance: Array, walls: Array) -> Array`, where `distance` is the matrix of distances
+                        between nodes and `walls` is the adjacency matrix of walls. By default, the simulator uses the
+                        residential TGax path loss model.
+   :type path_loss_fn: :class:`Callable`
 
    :returns: Two-dimensional array of path losses (dB) between all nodes.
    :rtype: :class:`NDArray`

@@ -10,6 +10,17 @@ mapc_optimal.utils
 
 
 
+Attributes
+----------
+
+.. autoapisummary::
+
+   mapc_optimal.utils.CENTRAL_FREQUENCY
+   mapc_optimal.utils.WALL_LOSS
+   mapc_optimal.utils.BREAKING_POINT
+   mapc_optimal.utils.REFERENCE_DISTANCE
+
+
 Functions
 ---------
 
@@ -46,6 +57,22 @@ Module Contents
    :rtype: :class:`NDArray`
 
 
+.. py:data:: CENTRAL_FREQUENCY
+   :value: 5.16
+
+
+.. py:data:: WALL_LOSS
+   :value: 7.0
+
+
+.. py:data:: BREAKING_POINT
+   :value: 10.0
+
+
+.. py:data:: REFERENCE_DISTANCE
+   :value: 1.0
+
+
 .. py:function:: tgax_path_loss(distance, walls)
 
    Calculates the path loss according to the TGax channel model [1]_.
@@ -63,7 +90,7 @@ Module Contents
    .. [1] https://www.ieee802.org/11/Reports/tgax_update.htm#:~:text=TGax%20Selection%20Procedure-,11%2D14%2D0980,-TGax%20Simulation%20Scenarios
 
 
-.. py:function:: positions_to_path_loss(pos, walls)
+.. py:function:: positions_to_path_loss(pos, walls, path_loss_fn = tgax_path_loss)
 
    Calculates the path loss for all nodes based on their positions and the wall positions.
    Channel is modeled using the TGax path loss model.
@@ -72,6 +99,11 @@ Module Contents
    :type pos: :class:`array_like`
    :param walls: Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
    :type walls: :class:`array_like`
+   :param path_loss_fn: A function that calculates the path loss between two nodes. The function signature should be
+                        `path_loss_fn(distance: Array, walls: Array) -> Array`, where `distance` is the matrix of distances
+                        between nodes and `walls` is the adjacency matrix of walls. By default, the simulator uses the
+                        residential TGax path loss model.
+   :type path_loss_fn: :class:`Callable`
 
    :returns: Two-dimensional array of path losses (dB) between all nodes.
    :rtype: :class:`NDArray`

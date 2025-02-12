@@ -17,10 +17,6 @@ Attributes
    mapc_optimal.constants.MAX_TX_POWER
    mapc_optimal.constants.MIN_TX_POWER
    mapc_optimal.constants.NOISE_FLOOR
-   mapc_optimal.constants.CENTRAL_FREQUENCY
-   mapc_optimal.constants.WALL_LOSS
-   mapc_optimal.constants.BREAKING_POINT
-   mapc_optimal.constants.REFERENCE_DISTANCE
    mapc_optimal.constants.DATA_RATES
    mapc_optimal.constants.MEAN_SNRS
    mapc_optimal.constants.MIN_SNRS
@@ -47,32 +43,6 @@ Module Contents
 
    Physical constant (dBm)
    https://www.nsnam.org/docs/models/html/wifi-testing.html#packet-error-rate-performance
-
-.. py:data:: CENTRAL_FREQUENCY
-   :value: 5.16
-
-
-   Simulation parameter (GHz)
-   https://en.wikipedia.org/wiki/List_of_WLAN_channels#5_GHz_(802.11a/h/n/ac/ax)
-
-.. py:data:: WALL_LOSS
-   :value: 7.0
-
-
-   Simulation parameter (dB)
-
-.. py:data:: BREAKING_POINT
-   :value: 10.0
-
-
-   TGax channel model parameter (m)
-   https://mentor.ieee.org/802.11/dcn/14/11-14-0980-16-00ax-simulation-scenarios.docx (p. 19)
-
-.. py:data:: REFERENCE_DISTANCE
-   :value: 1.0
-
-
-   TGax channel model parameter (m)
 
 .. py:data:: DATA_RATES
    :value: [8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2]
