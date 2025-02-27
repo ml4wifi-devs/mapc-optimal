@@ -214,11 +214,18 @@ class Pricing:
                 - dual_alpha
                 + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
+        elif self.opt_type == OptimizationType.MAX_MIN_BASELINE:
+            # maximization of the worst throughput with the enforcement of the baseline rates
+            pricing += (
+                - dual_alpha
+                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+                + plp.lpSum(dual_gamma[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+            ), 'tx_set_throughput_g'
         elif self.opt_type == OptimizationType.PROPORTIONAL:
             # maximization of the sum of the logarithms of the throughputs
             pricing += (
                 - dual_alpha
-                + plp.lpSum(a * dual_beta[s] * link_data_rate[l] for a in self.log_approx[0] for s in stations for l in links if link_node_b[l] == s)
+                + plp.lpSum(a * dual_beta[s, k] * link_data_rate[l] for k, a in enumerate(self.log_approx[0]) for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
         else:
             raise ValueError('Invalid optimization type')

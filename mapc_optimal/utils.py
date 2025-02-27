@@ -14,6 +14,7 @@ from mapc_optimal.constants import BREAKING_POINT, CENTRAL_FREQUENCY, REFERENCE_
 class OptimizationType(Enum):
     SUM = auto()
     MAX_MIN = auto()
+    MAX_MIN_BASELINE = auto()
     PROPORTIONAL = auto()
 
 

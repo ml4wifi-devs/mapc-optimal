@@ -78,7 +78,6 @@ class Solver:
             max_tx_power: float = MAX_TX_POWER,
             min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
-            min_throughput: float = 0.,
             opt_type: OptimizationType = OptimizationType.PROPORTIONAL,
             max_iterations: int = 100,
             log_segments: int = 10,
@@ -117,8 +116,6 @@ class Solver:
             The minimum transmission power (dBm) that can be used.
         noise_floor: float, default=-93.97
             The level of noise in the environment (dBm).
-        min_throughput: float, default=0.0
-            The minimum throughput required for each node (Mb/s) while maximizing the total throughput.
         opt_type: OptimizationType, default=OptimizationType.PROPORTIONAL
             The type of optimization problem to solve. The proportional fairness problem is solved by default.
         max_iterations: int, default=100
@@ -139,18 +136,18 @@ class Solver:
         self.max_tx_power = dbm_to_lin(max_tx_power).item()
         self.min_tx_power = dbm_to_lin(min_tx_power).item()
         self.noise_floor = dbm_to_lin(noise_floor).item()
-        self.min_throughput = min_throughput
         self.opt_type = opt_type
         self.max_iterations = max_iterations
         self.log_approx = self._linearize_log(log_segments)
         self.epsilon = epsilon
         self.solver = solver or plp.PULP_CBC_CMD(msg=False)
+        self.M = len(stations) * mcs_data_rates[-1]  # Maximum achievable throughput
 
         self.main = Main(
-            min_throughput=self.min_throughput,
             log_approx=self.log_approx,
             opt_type=self.opt_type,
-            solver=self.solver
+            solver=self.solver,
+            M=self.M
         )
         self.pricing = Pricing(
             mcs_values=self.mcs_values,
@@ -276,6 +273,7 @@ class Solver:
             self, 
             path_loss: NDArray,
             associations: dict = None,
+            baseline: dict = None,
             return_objectives: bool = False
     ) -> Union[tuple[dict, float], tuple[dict, float, list[float]]]:
         """
@@ -288,6 +286,8 @@ class Solver:
             Matrix containing the path loss between each pair of nodes.
         associations : dict
             The dictionary of associations between APs and stations.
+        baseline : dict, default=None
+            Dictionary containing the baseline rates of the links (only used for the max-min optimization with baseline).
         return_objectives : bool, default=False
             Flag indicating whether to return the pricing objective values.
 
@@ -298,6 +298,10 @@ class Solver:
             the solver can return a list of the pricing objective values for each iteration. 
             It can be useful to check if the solver has converged.
         """
+
+        assert not self.opt_type == OptimizationType.MAX_MIN_BASELINE or baseline is not None, \
+            'Baseline rates must be provided for the max-min optimization with baseline.'
+        main_baseline = {sta: 0.0 for sta in baseline}
 
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss, associations)
@@ -322,8 +326,10 @@ class Solver:
                 conf_links=configuration['conf_links'],
                 conf_link_rates=configuration['conf_link_rates'],
                 conf_total_rates=configuration['conf_total_rates'],
-                confs=configuration['confs']
+                confs=configuration['confs'],
+                baseline=main_baseline
             )
+            main_baseline = baseline
 
             configuration, pricing_objective = self.pricing(
                 dual_alpha=main_result['alpha'],
