@@ -346,7 +346,7 @@ class Solver:
             )
             pricing_objectives.append(pricing_objective)
 
-            if pricing_objective <= self.epsilon:
+            if abs(pricing_objective) <= self.epsilon:
                 break
 
         result = {

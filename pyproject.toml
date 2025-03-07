@@ -17,10 +17,10 @@ authors = [
   {name = "Szymon Szott", email = "szymon.szott@agh.edu.pl"}
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
-  "numpy~=1.26.0",
-  "pulp~=2.7.0"
+  "numpy~=1.26.4",
+  "pulp~=3.0.2"
 ]
 
 [build-system]
