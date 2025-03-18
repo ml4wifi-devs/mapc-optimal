@@ -72,13 +72,13 @@ class Solver:
             self,
             stations: list,
             access_points: list,
-            mcs_values: int = len(DATA_RATES),
-            mcs_data_rates: NDArray = DATA_RATES,
-            min_snr: NDArray = MIN_SNRS,
+            channel_width: int = 20,
+            mcs_data_rates: NDArray = None,
+            min_snr: NDArray = None,
             max_tx_power: float = MAX_TX_POWER,
             min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
-            opt_type: OptimizationType = OptimizationType.PROPORTIONAL,
+            opt_type: OptimizationType = OptimizationType.MAX_MIN,
             max_iterations: int = 100,
             log_segments: int = 10,
             epsilon: float = 1e-5,
@@ -102,11 +102,11 @@ class Solver:
             Lists of numbers representing the stations.
         access_points: list
             Lists of numbers representing the access points (APs) in the network.
-        mcs_values: int, default=12
-            A number of MCS values available in the network. IEEE 802.11ax values are used by default.
+        channel_width: int, default=20
+            The channel width used in the network (MHz).
         mcs_data_rates: NDArray, default=mapc_optimal.constants.DATA_RATES
-            A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
-            20MHz bandwidth and 800 ns GI data rates by default.
+            A list of data rates corresponding to the MCS values (Mb/s). IEEE 802.11be with 1 SS
+            and 800 ns GI data rates are used by default.
         min_snr: NDArray, default=mapc_optimal.constants.MIN_SNRS
             The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically 
             determined in ns-3 simulations by default.
@@ -116,8 +116,8 @@ class Solver:
             The minimum transmission power (dBm) that can be used.
         noise_floor: float, default=-93.97
             The level of noise in the environment (dBm).
-        opt_type: OptimizationType, default=OptimizationType.PROPORTIONAL
-            The type of optimization problem to solve. The proportional fairness problem is solved by default.
+        opt_type: OptimizationType, default=OptimizationType.MAX_MIN
+            The type of optimization problem to solve. The max min problem is solved by default.
         max_iterations: int, default=100
             The maximum number of iterations of the solver.
         log_segments: int, default=10
@@ -128,9 +128,15 @@ class Solver:
             The solver used to solve the optimization problems.
         """
 
+        if mcs_data_rates is None:
+            mcs_data_rates = DATA_RATES[channel_width]
+
+        if min_snr is None:
+            min_snr = MIN_SNRS[channel_width]
+
         self.stations = stations
         self.access_points = access_points
-        self.mcs_values = range(mcs_values)
+        self.mcs_values = range(len(mcs_data_rates))
         self.mcs_data_rates = mcs_data_rates
         self.min_sinr = dbm_to_lin(min_snr)
         self.max_tx_power = dbm_to_lin(max_tx_power).item()
@@ -301,7 +307,10 @@ class Solver:
 
         assert not self.opt_type == OptimizationType.MAX_MIN_BASELINE or baseline is not None, \
             'Baseline rates must be provided for the max-min optimization with baseline.'
-        main_baseline = {sta: 0.0 for sta in baseline}
+
+        main_baseline = None
+        if baseline is not None:
+            main_baseline = {sta: 0.0 for sta in baseline}
 
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss, associations)
