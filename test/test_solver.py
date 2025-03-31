@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from mapc_optimal import Solver, positions_to_path_loss
+from mapc_optimal import Solver, OptimizationType, positions_to_path_loss
 
 
 class SolverTestCase(unittest.TestCase):
@@ -27,10 +27,12 @@ class SolverTestCase(unittest.TestCase):
         path_loss = positions_to_path_loss(pos, walls)
         sta = list(range(4, 20))
         ap = list(range(4))
+        baselines = {f'STA_{i}': 0. for i in sta}
 
-        for opt_sum in [True, False]:
-            solver = Solver(sta, ap, opt_sum=opt_sum)
-            result, rate, obj = solver(path_loss, return_objectives=True)
+        for opt_type in OptimizationType:
+            solver = Solver(sta, ap, opt_type=opt_type)
+            result, rate, obj = solver(path_loss, baseline=baselines, return_objectives=True)
 
             assert obj[-1] < 1e-5
-            assert 550 < rate < 600
+            print(rate)
+            assert 650 < rate < 700

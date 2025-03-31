@@ -1,13 +1,14 @@
 from itertools import product
 from typing import Union
 
+import numpy as np
 import pulp as plp
 from numpy.typing import NDArray
 
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
 from mapc_optimal.main import Main
 from mapc_optimal.pricing import Pricing
-from mapc_optimal.utils import dbm_to_lin, lin_to_dbm
+from mapc_optimal.utils import OptimizationType, dbm_to_lin, lin_to_dbm
 
 
 class Solver:
@@ -71,15 +72,15 @@ class Solver:
             self,
             stations: list,
             access_points: list,
-            mcs_values: int = len(DATA_RATES),
-            mcs_data_rates: NDArray = DATA_RATES,
-            min_snr: NDArray = MIN_SNRS,
+            channel_width: int = 20,
+            mcs_data_rates: NDArray = None,
+            min_snr: NDArray = None,
             max_tx_power: float = MAX_TX_POWER,
             min_tx_power: float = MIN_TX_POWER,
             noise_floor: float = NOISE_FLOOR,
-            min_throughput: float = 0.,
-            opt_sum: bool = False,
+            opt_type: OptimizationType = OptimizationType.MAX_MIN,
             max_iterations: int = 100,
+            log_segments: int = 10,
             epsilon: float = 1e-5,
             solver: plp.LpSolver = None
     ) -> None:
@@ -101,11 +102,11 @@ class Solver:
             Lists of numbers representing the stations.
         access_points: list
             Lists of numbers representing the access points (APs) in the network.
-        mcs_values: int, default=12
-            A number of MCS values available in the network. IEEE 802.11ax values are used by default.
+        channel_width: int, default=20
+            The channel width used in the network (MHz).
         mcs_data_rates: NDArray, default=mapc_optimal.constants.DATA_RATES
-            A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
-            20MHz bandwidth and 800 ns GI data rates by default.
+            A list of data rates corresponding to the MCS values (Mb/s). IEEE 802.11be with 1 SS
+            and 800 ns GI data rates are used by default.
         min_snr: NDArray, default=mapc_optimal.constants.MIN_SNRS
             The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically 
             determined in ns-3 simulations by default.
@@ -115,37 +116,44 @@ class Solver:
             The minimum transmission power (dBm) that can be used.
         noise_floor: float, default=-93.97
             The level of noise in the environment (dBm).
-        min_throughput: float, default=0.0
-            The minimum throughput required for each node (Mb/s) while maximizing the total throughput.
-        opt_sum: bool, default=False
-            A boolean value indicating whether to maximize the sum of the throughput of all nodes in the network
-            (`True`) or the minimum throughput of all nodes in the network (`False`).
+        opt_type: OptimizationType, default=OptimizationType.MAX_MIN
+            The type of optimization problem to solve. The max min problem is solved by default.
         max_iterations: int, default=100
             The maximum number of iterations of the solver.
+        log_segments: int, default=10
+            The number of linear function segments used to approximate the logarithm function in proportional fairness setting.
         epsilon: float, default=1e-5
              The minimum value of the pricing objective function to continue the iterations.
         solver: pulp.LpSolver, default=pulp.PULP_CBC_CMD(msg=False)
             The solver used to solve the optimization problems.
         """
 
+        if mcs_data_rates is None:
+            mcs_data_rates = DATA_RATES[channel_width]
+
+        if min_snr is None:
+            min_snr = MIN_SNRS[channel_width]
+
         self.stations = stations
         self.access_points = access_points
-        self.mcs_values = range(mcs_values)
+        self.mcs_values = range(len(mcs_data_rates))
         self.mcs_data_rates = mcs_data_rates
         self.min_sinr = dbm_to_lin(min_snr)
         self.max_tx_power = dbm_to_lin(max_tx_power).item()
         self.min_tx_power = dbm_to_lin(min_tx_power).item()
         self.noise_floor = dbm_to_lin(noise_floor).item()
-        self.min_throughput = min_throughput
-        self.opt_sum = opt_sum
+        self.opt_type = opt_type
         self.max_iterations = max_iterations
+        self.log_approx = self._linearize_log(log_segments)
         self.epsilon = epsilon
         self.solver = solver or plp.PULP_CBC_CMD(msg=False)
+        self.M = len(stations) * mcs_data_rates[-1]  # Maximum achievable throughput
 
         self.main = Main(
-            min_throughput=self.min_throughput,
-            opt_sum=self.opt_sum,
-            solver=self.solver
+            log_approx=self.log_approx,
+            opt_type=self.opt_type,
+            solver=self.solver,
+            M=self.M
         )
         self.pricing = Pricing(
             mcs_values=self.mcs_values,
@@ -154,9 +162,41 @@ class Solver:
             max_tx_power=self.max_tx_power,
             min_tx_power=self.min_tx_power,
             noise_floor=self.noise_floor,
-            opt_sum=self.opt_sum,
+            log_approx=self.log_approx,
+            opt_type=self.opt_type,
             solver=self.solver
         )
+
+    @staticmethod
+    def _linearize_log(k: int, min_val: float = 0, max_val: float = 3) -> tuple[NDArray, NDArray]:
+        """
+        Linearizes the logarithm function by approximating it with a piecewise linear function.
+
+        Parameters
+        ----------
+        k : int
+            Number of segments used to approximate the logarithm function.
+        min_val : float, default=0
+            Minimum value of the logarithm. Note! The value is in the log10 scale.
+        max_val : float, default=3
+            Maximum value of the logarithm. Note! The value is in the log10 scale.
+
+        Returns
+        -------
+        slopes, biases : tuple[NDArray, NDArray]
+            Arrays containing the slopes and biases of the linear functions.
+        """
+
+        xs = np.logspace(min_val, max_val, k + 1, base=10)
+        ys = np.log10(xs)
+
+        xs1, xs2 = xs[:-1], xs[1:]
+        ys1, ys2 = ys[:-1], ys[1:]
+
+        slopes = (ys2 - ys1) / (xs2 - xs1)
+        biases = ys1 - xs1 * slopes
+
+        return slopes, biases
 
     def _tx_possible(self, path_loss: float) -> bool:
         """
@@ -239,6 +279,7 @@ class Solver:
             self, 
             path_loss: NDArray,
             associations: dict = None,
+            baseline: dict = None,
             return_objectives: bool = False
     ) -> Union[tuple[dict, float], tuple[dict, float, list[float]]]:
         """
@@ -251,6 +292,8 @@ class Solver:
             Matrix containing the path loss between each pair of nodes.
         associations : dict
             The dictionary of associations between APs and stations.
+        baseline : dict, default=None
+            Dictionary containing the baseline rates of the links (only used for the max-min optimization with baseline).
         return_objectives : bool, default=False
             Flag indicating whether to return the pricing objective values.
 
@@ -261,6 +304,13 @@ class Solver:
             the solver can return a list of the pricing objective values for each iteration. 
             It can be useful to check if the solver has converged.
         """
+
+        assert not self.opt_type == OptimizationType.MAX_MIN_BASELINE or baseline is not None, \
+            'Baseline rates must be provided for the max-min optimization with baseline.'
+
+        main_baseline = None
+        if baseline is not None:
+            main_baseline = {sta: 0.0 for sta in baseline}
 
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss, associations)
@@ -285,8 +335,10 @@ class Solver:
                 conf_links=configuration['conf_links'],
                 conf_link_rates=configuration['conf_link_rates'],
                 conf_total_rates=configuration['conf_total_rates'],
-                confs=configuration['confs']
+                confs=configuration['confs'],
+                baseline=main_baseline
             )
+            main_baseline = baseline
 
             configuration, pricing_objective = self.pricing(
                 dual_alpha=main_result['alpha'],
@@ -303,7 +355,7 @@ class Solver:
             )
             pricing_objectives.append(pricing_objective)
 
-            if pricing_objective <= self.epsilon:
+            if abs(pricing_objective) <= self.epsilon:
                 break
 
         result = {

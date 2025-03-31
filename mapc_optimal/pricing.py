@@ -1,6 +1,8 @@
 import pulp as plp
 from numpy.typing import NDArray
 
+from mapc_optimal.utils import OptimizationType
+
 
 class Pricing:
     r"""
@@ -15,7 +17,8 @@ class Pricing:
             max_tx_power: float,
             min_tx_power: float,
             noise_floor: float,
-            opt_sum: bool,
+            log_approx: tuple[NDArray, NDArray],
+            opt_type: OptimizationType,
             solver: plp.LpSolver
     ) -> None:
         r"""
@@ -33,8 +36,10 @@ class Pricing:
             Minimum transmission power of the nodes.
         noise_floor : float
             Mean level of the noise floor in the network.
-        opt_sum : bool
-            If True, the total throughput is optimized, otherwise the worst throughput is optimized.
+        log_approx : tuple[NDArray, NDArray]
+            Tuple containing the slopes and biases of the piecewise linear approximation of the logarithm function.
+        opt_type : OptimizationType
+            The type of optimization problem to solve.
         solver : pulp.LpSolver
             Solver used to solve the pricing problem.
         """
@@ -46,7 +51,8 @@ class Pricing:
         self.max_tx_power = max_tx_power
         self.min_tx_power = min_tx_power
         self.noise_floor = noise_floor
-        self.opt_sum = opt_sum
+        self.log_approx = log_approx
+        self.opt_type = opt_type
         self.solver = solver
 
     def _best_rate(self, path_loss: float) -> float:
@@ -195,19 +201,34 @@ class Pricing:
             # data rate obtained in link (on the basis of the switched-on MCS modes)
             pricing += link_data_rate[l] == plp.lpSum(self.mcs_rate_diff[m] * link_mcs[l, m] for m in self.mcs_values), f'link_data_rate_{l}_c'
 
-        if self.opt_sum:
+        if self.opt_type == OptimizationType.SUM:
             # maximization of the total throughput
             pricing += (
                 plp.lpSum(link_data_rate[l] for l in links)
                 - dual_alpha
                 + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
-        else:
+        elif self.opt_type == OptimizationType.MAX_MIN:
             # maximization of the worst throughput
             pricing += (
                 - dual_alpha
                 + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
+        elif self.opt_type == OptimizationType.MAX_MIN_BASELINE:
+            # maximization of the worst throughput with the enforcement of the baseline rates
+            pricing += (
+                - dual_alpha
+                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+                + plp.lpSum(dual_gamma[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+            ), 'tx_set_throughput_g'
+        elif self.opt_type == OptimizationType.PROPORTIONAL:
+            # maximization of the sum of the logarithms of the throughputs
+            pricing += (
+                - dual_alpha
+                + plp.lpSum(a * dual_beta[s, k] * link_data_rate[l] for k, a in enumerate(self.log_approx[0]) for s in stations for l in links if link_node_b[l] == s)
+            ), 'tx_set_throughput_g'
+        else:
+            raise ValueError('Invalid optimization type')
 
         pricing.link_on = link_on
         pricing.link_data_rate = link_data_rate
