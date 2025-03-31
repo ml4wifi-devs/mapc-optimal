@@ -4,6 +4,7 @@ the TGax channel model.
 """
 
 from enum import Enum, auto
+from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
