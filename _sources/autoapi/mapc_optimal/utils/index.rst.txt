@@ -21,6 +21,14 @@ Attributes
    mapc_optimal.utils.REFERENCE_DISTANCE
 
 
+Classes
+-------
+
+.. autoapisummary::
+
+   mapc_optimal.utils.OptimizationType
+
+
 Functions
 ---------
 
@@ -35,15 +43,69 @@ Functions
 Module Contents
 ---------------
 
+.. py:class:: OptimizationType(*args, **kwds)
+
+
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access:
+
+     >>> Color.RED
+     <Color.RED: 1>
+
+   - value lookup:
+
+     >>> Color(1)
+     <Color.RED: 1>
+
+   - name lookup:
+
+     >>> Color['RED']
+     <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+
+   .. py:attribute:: SUM
+
+
+   .. py:attribute:: MAX_MIN
+
+
+   .. py:attribute:: MAX_MIN_BASELINE
+
+
+   .. py:attribute:: PROPORTIONAL
+
+
 .. py:function:: dbm_to_lin(x)
 
    Converts dBm to a linear scale.
 
    :param x: Input in dBm.
-   :type x: :class:`array_like`
+   :type x: :py:class:`array_like`
 
    :returns: Output in a linear scale.
-   :rtype: :class:`NDArray`
+   :rtype: :py:class:`NDArray`
 
 
 .. py:function:: lin_to_dbm(x)
@@ -51,10 +113,10 @@ Module Contents
    Converts linear scale to dBm.
 
    :param x: Input in a linear scale.
-   :type x: :class:`array_like`
+   :type x: :py:class:`array_like`
 
    :returns: Output in dBm.
-   :rtype: :class:`NDArray`
+   :rtype: :py:class:`NDArray`
 
 
 .. py:data:: CENTRAL_FREQUENCY
@@ -78,12 +140,12 @@ Module Contents
    Calculates the path loss according to the TGax channel model [1]_.
 
    :param distance: Distance between nodes.
-   :type distance: :class:`array_like`
+   :type distance: :py:class:`array_like`
    :param walls: Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
-   :type walls: :class:`array_like`
+   :type walls: :py:class:`array_like`
 
    :returns: Two dimensional array of path losses (dB) between all nodes.
-   :rtype: :class:`array_like`
+   :rtype: :py:class:`array_like`
 
    .. rubric:: References
 
@@ -96,16 +158,16 @@ Module Contents
    Channel is modeled using the TGax path loss model.
 
    :param pos: Two dimensional array of node positions. Each row corresponds to X and Y coordinates of a node.
-   :type pos: :class:`array_like`
+   :type pos: :py:class:`array_like`
    :param walls: Adjacency matrix describing walls between nodes (1 if there is a wall, 0 otherwise).
-   :type walls: :class:`array_like`
+   :type walls: :py:class:`array_like`
    :param path_loss_fn: A function that calculates the path loss between two nodes. The function signature should be
                         `path_loss_fn(distance: Array, walls: Array) -> Array`, where `distance` is the matrix of distances
                         between nodes and `walls` is the adjacency matrix of walls. By default, the simulator uses the
                         residential TGax path loss model.
-   :type path_loss_fn: :class:`Callable`
+   :type path_loss_fn: :py:class:`Callable`
 
    :returns: Two-dimensional array of path losses (dB) between all nodes.
-   :rtype: :class:`NDArray`
+   :rtype: :py:class:`NDArray`
 
 

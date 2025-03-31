@@ -15,7 +15,7 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: Solver(stations, access_points, mcs_values = len(DATA_RATES), mcs_data_rates = DATA_RATES, min_snr = MIN_SNRS, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, min_throughput = 0.0, opt_sum = False, max_iterations = 100, epsilon = 1e-05, solver = None)
+.. py:class:: Solver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, opt_type = OptimizationType.MAX_MIN, max_iterations = 100, log_segments = 10, epsilon = 1e-05, solver = None)
 
    The solver class coordinating the overall process of finding the optimal solution.
    It initializes the solver, sets up the network configuration, and manages the iterations.
@@ -81,34 +81,33 @@ Module Contents
        However, we recommend using a better solver, such as CPLEX.
 
    :param stations: Lists of numbers representing the stations.
-   :type stations: :class:`list`
+   :type stations: :py:class:`list`
    :param access_points: Lists of numbers representing the access points (APs) in the network.
-   :type access_points: :class:`list`
-   :param mcs_values: A number of MCS values available in the network. IEEE 802.11ax values are used by default.
-   :type mcs_values: :class:`int`, *default* ``12``
-   :param mcs_data_rates: A list of data rates corresponding to the MCS values (Mb/s) IEEE 802.11ax single stream with
-                          20MHz bandwidth and 800 ns GI data rates by default.
-   :type mcs_data_rates: :class:`NDArray`, *default* :class:`mapc_optimal.constants.DATA_RATES`
+   :type access_points: :py:class:`list`
+   :param channel_width: The channel width used in the network (MHz).
+   :type channel_width: :py:class:`int`, *default* ``20``
+   :param mcs_data_rates: A list of data rates corresponding to the MCS values (Mb/s). IEEE 802.11be with 1 SS
+                          and 800 ns GI data rates are used by default.
+   :type mcs_data_rates: :py:class:`NDArray`, *default* :py:class:`mapc_optimal.constants.DATA_RATES`
    :param min_snr: The minimum SNR required for a successful transmission (dB) for each MCS value. Empirically
                    determined in ns-3 simulations by default.
-   :type min_snr: :class:`NDArray`, *default* :class:`mapc_optimal.constants.MIN_SNRS`
+   :type min_snr: :py:class:`NDArray`, *default* :py:class:`mapc_optimal.constants.MIN_SNRS`
    :param max_tx_power: The maximum transmission power (dBm) available.
-   :type max_tx_power: :class:`float`, *default* ``20.0``
+   :type max_tx_power: :py:class:`float`, *default* ``20.0``
    :param min_tx_power: The minimum transmission power (dBm) that can be used.
-   :type min_tx_power: :class:`float`, *default* ``10.0``
+   :type min_tx_power: :py:class:`float`, *default* ``10.0``
    :param noise_floor: The level of noise in the environment (dBm).
-   :type noise_floor: :class:`float`, *default* ``-93.97``
-   :param min_throughput: The minimum throughput required for each node (Mb/s) while maximizing the total throughput.
-   :type min_throughput: :class:`float`, *default* ``0.0``
-   :param opt_sum: A boolean value indicating whether to maximize the sum of the throughput of all nodes in the network
-                   (`True`) or the minimum throughput of all nodes in the network (`False`).
-   :type opt_sum: :class:`bool`, *default* :obj:`False`
+   :type noise_floor: :py:class:`float`, *default* ``-93.97``
+   :param opt_type: The type of optimization problem to solve. The max min problem is solved by default.
+   :type opt_type: :py:class:`OptimizationType`, *default* :py:class:`OptimizationType.MAX_MIN`
    :param max_iterations: The maximum number of iterations of the solver.
-   :type max_iterations: :class:`int`, *default* ``100``
+   :type max_iterations: :py:class:`int`, *default* ``100``
+   :param log_segments: The number of linear function segments used to approximate the logarithm function in proportional fairness setting.
+   :type log_segments: :py:class:`int`, *default* ``10``
    :param epsilon: The minimum value of the pricing objective function to continue the iterations.
-   :type epsilon: :class:`float`, *default* ``1e-5``
+   :type epsilon: :py:class:`float`, *default* ``1e-5``
    :param solver: The solver used to solve the optimization problems.
-   :type solver: :class:`pulp.LpSolver`, *default* :class:`pulp.PULP_CBC_CMD(msg=False)`
+   :type solver: :py:class:`pulp.LpSolver`, *default* :py:class:`pulp.PULP_CBC_CMD(msg=False)`
 
 
    .. py:attribute:: stations
@@ -121,7 +120,7 @@ Module Contents
 
 
    .. py:attribute:: mcs_data_rates
-      :value: [8.6, 17.2, 25.8, 34.4, 51.6, 68.8, 77.4, 86.0, 103.2, 114.7, 129.0, 143.2]
+      :value: None
 
 
 
@@ -137,19 +136,15 @@ Module Contents
    .. py:attribute:: noise_floor
 
 
-   .. py:attribute:: min_throughput
-      :value: 0.0
-
-
-
-   .. py:attribute:: opt_sum
-      :value: False
-
+   .. py:attribute:: opt_type
 
 
    .. py:attribute:: max_iterations
       :value: 100
 
+
+
+   .. py:attribute:: log_approx
 
 
    .. py:attribute:: epsilon
@@ -160,28 +155,33 @@ Module Contents
    .. py:attribute:: solver
 
 
+   .. py:attribute:: M
+
+
    .. py:attribute:: main
 
 
    .. py:attribute:: pricing
 
 
-   .. py:method:: __call__(path_loss, associations = None, return_objectives = False)
+   .. py:method:: __call__(path_loss, associations = None, baseline = None, return_objectives = False)
 
       Solves the MAPC C-SR problem given the path loss between each pair of nodes in the network.
       Returns the final configurations, the time shares, and the total throughput.
 
       :param path_loss: Matrix containing the path loss between each pair of nodes.
-      :type path_loss: :class:`NDArray`
+      :type path_loss: :py:class:`NDArray`
       :param associations: The dictionary of associations between APs and stations.
-      :type associations: :class:`dict`
+      :type associations: :py:class:`dict`
+      :param baseline: Dictionary containing the baseline rates of the links (only used for the max-min optimization with baseline).
+      :type baseline: :py:class:`dict`, *default* :py:obj:`None`
       :param return_objectives: Flag indicating whether to return the pricing objective values.
-      :type return_objectives: :class:`bool`, *default* :obj:`False`
+      :type return_objectives: :py:class:`bool`, *default* :py:obj:`False`
 
       :returns: **result** -- Tuple containing the final configurations and the total throughput. Additionally,
                 the solver can return a list of the pricing objective values for each iteration.
                 It can be useful to check if the solver has converged.
-      :rtype: :class:`tuple[dict`, :class:`float]` or :class:`tuple[dict`, :class:`float`, :class:`list[float]]`
+      :rtype: :py:class:`tuple[dict`, :py:class:`float]` or :py:class:`tuple[dict`, :py:class:`float`, :py:class:`list[float]]`
 
 
 
