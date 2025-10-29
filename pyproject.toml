@@ -19,8 +19,8 @@ authors = [
 
 requires-python = ">=3.12"
 dependencies = [
-  "numpy~=1.26.4",
-  "pulp~=3.0.2"
+  "numpy~=2.3.4",
+  "pulp~=3.3.0"
 ]
 
 [build-system]
