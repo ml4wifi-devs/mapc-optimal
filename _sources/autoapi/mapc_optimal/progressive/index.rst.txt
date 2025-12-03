@@ -1,0 +1,17 @@
+mapc_optimal.progressive
+========================
+
+.. py:module:: mapc_optimal.progressive
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/mapc_optimal/progressive/main/index
+   /autoapi/mapc_optimal/progressive/pricing/index
+   /autoapi/mapc_optimal/progressive/solver/index
+
+

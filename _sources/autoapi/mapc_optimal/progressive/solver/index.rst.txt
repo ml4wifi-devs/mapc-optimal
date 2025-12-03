@@ -1,0 +1,70 @@
+mapc_optimal.progressive.solver
+===============================
+
+.. py:module:: mapc_optimal.progressive.solver
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   mapc_optimal.progressive.solver.Solver
+
+
+Module Contents
+---------------
+
+.. py:class:: Solver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, max_iterations = 100, epsilon = 1e-05, solver = None)
+
+   .. py:attribute:: stations
+
+
+   .. py:attribute:: access_points
+
+
+   .. py:attribute:: mcs_values
+
+
+   .. py:attribute:: mcs_data_rates
+      :value: None
+
+
+
+   .. py:attribute:: min_sinr
+
+
+   .. py:attribute:: max_tx_power
+
+
+   .. py:attribute:: min_tx_power
+
+
+   .. py:attribute:: noise_floor
+
+
+   .. py:attribute:: max_iterations
+      :value: 100
+
+
+
+   .. py:attribute:: epsilon
+      :value: 1e-05
+
+
+
+   .. py:attribute:: solver
+
+
+   .. py:attribute:: M
+
+
+   .. py:attribute:: main
+
+
+   .. py:attribute:: pricing
+
+
+   .. py:method:: __call__(path_loss, associations)
+
+

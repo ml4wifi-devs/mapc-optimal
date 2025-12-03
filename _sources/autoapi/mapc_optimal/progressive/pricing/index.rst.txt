@@ -1,0 +1,49 @@
+mapc_optimal.progressive.pricing
+================================
+
+.. py:module:: mapc_optimal.progressive.pricing
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   mapc_optimal.progressive.pricing.Pricing
+
+
+Module Contents
+---------------
+
+.. py:class:: Pricing(mcs_values, mcs_data_rates, min_sinr, max_tx_power, min_tx_power, noise_floor, solver)
+
+   .. py:attribute:: mcs_values
+
+
+   .. py:attribute:: mcs_data_rates
+
+
+   .. py:attribute:: min_sinr
+
+
+   .. py:attribute:: mcs_rate_diff
+
+
+   .. py:attribute:: max_tx_power
+
+
+   .. py:attribute:: min_tx_power
+
+
+   .. py:attribute:: noise_floor
+
+
+   .. py:attribute:: solver
+
+
+   .. py:method:: initial_configuration(links, link_path_loss)
+
+
+   .. py:method:: __call__(dual_alpha, dual_beta, dual_gamma, dual_delta, stations, access_points, links, link_node_a, link_node_b, link_path_loss, max_interference, configuration)
+
+

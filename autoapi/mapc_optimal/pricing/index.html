@@ -11,11 +11,11 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=ec641305" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="mapc_optimal.solver" href="../solver/index.html" />
+    <link rel="next" title="mapc_optimal.progressive" href="../progressive/index.html" />
     <link rel="prev" title="mapc_optimal.main" href="../main/index.html" />
    
   <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
@@ -50,7 +50,7 @@
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="mapc_optimal.pricing.Pricing">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mapc_optimal.pricing.</span></span><span class="sig-name descname"><span class="pre">Pricing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcs_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sinr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_approx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.pricing.Pricing" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mapc_optimal.pricing.</span></span><span class="sig-name descname"><span class="pre">Pricing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcs_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sinr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_approx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.pricing.Pricing" title="Link to this definition">¶</a></dt>
 <dd><p>The pricing problem responsible for proposing new configurations for the main problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -236,6 +236,7 @@ Returns all the configurations and the value of the objective function.</p>
 </li>
 </ul>
 </li>
+<li class="toctree-l4"><a class="reference internal" href="../progressive/index.html">mapc_optimal.progressive</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../solver/index.html">mapc_optimal.solver</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/index.html">mapc_optimal.utils</a></li>
 </ul>
@@ -256,7 +257,7 @@ Returns all the configurations and the value of the objective function.</p>
   <li><a href="../../index.html">API Reference</a><ul>
   <li><a href="../index.html">mapc_optimal</a><ul>
       <li>Previous: <a href="../main/index.html" title="previous chapter">mapc_optimal.main</a></li>
-      <li>Next: <a href="../solver/index.html" title="next chapter">mapc_optimal.solver</a></li>
+      <li>Next: <a href="../progressive/index.html" title="next chapter">mapc_optimal.progressive</a></li>
   </ul></li>
   </ul></li>
   </ul></li>

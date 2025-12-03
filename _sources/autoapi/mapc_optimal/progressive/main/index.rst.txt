@@ -1,0 +1,28 @@
+mapc_optimal.progressive.main
+=============================
+
+.. py:module:: mapc_optimal.progressive.main
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   mapc_optimal.progressive.main.Main
+
+
+Module Contents
+---------------
+
+.. py:class:: Main(solver, M)
+
+   .. py:attribute:: solver
+
+
+   .. py:attribute:: M
+
+
+   .. py:method:: __call__(stations, selected_stations, link_node_b, conf_links, conf_link_rates, confs, sigma, rho, l)
+
+

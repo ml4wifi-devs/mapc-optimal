@@ -11,13 +11,13 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=ec641305" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="mapc_optimal.utils" href="../utils/index.html" />
-    <link rel="prev" title="mapc_optimal.pricing" href="../pricing/index.html" />
+    <link rel="prev" title="mapc_optimal.progressive.solver" href="../progressive/solver/index.html" />
    
   <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
   
@@ -51,7 +51,7 @@
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="mapc_optimal.solver.Solver">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mapc_optimal.solver.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_snr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MAX_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOISE_FLOOR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimizationType.MAX_MIN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.solver.Solver" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mapc_optimal.solver.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_snr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MAX_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOISE_FLOOR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimizationType.MAX_MIN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.solver.Solver" title="Link to this definition">¶</a></dt>
 <dd><p>The solver class coordinating the overall process of finding the optimal solution.
 It initializes the solver, sets up the network configuration, and manages the iterations.
 The optimization problem can be formulated in two ways:
@@ -151,7 +151,7 @@ determined in ns-3 simulations by default.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mapc_optimal.solver.Solver.mcs_data_rates">
-<span class="sig-name descname"><span class="pre">mcs_data_rates</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#mapc_optimal.solver.Solver.mcs_data_rates" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">mcs_data_rates</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#mapc_optimal.solver.Solver.mcs_data_rates" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -181,7 +181,7 @@ determined in ns-3 simulations by default.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mapc_optimal.solver.Solver.max_iterations">
-<span class="sig-name descname"><span class="pre">max_iterations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></em><a class="headerlink" href="#mapc_optimal.solver.Solver.max_iterations" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">max_iterations</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></span><a class="headerlink" href="#mapc_optimal.solver.Solver.max_iterations" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -191,7 +191,7 @@ determined in ns-3 simulations by default.</p></li>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mapc_optimal.solver.Solver.epsilon">
-<span class="sig-name descname"><span class="pre">epsilon</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-05</span></em><a class="headerlink" href="#mapc_optimal.solver.Solver.epsilon" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">epsilon</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-05</span></span><a class="headerlink" href="#mapc_optimal.solver.Solver.epsilon" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -285,6 +285,7 @@ It can be useful to check if the solver has converged.</p>
 <li class="toctree-l4"><a class="reference internal" href="../constants/index.html">mapc_optimal.constants</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../main/index.html">mapc_optimal.main</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../pricing/index.html">mapc_optimal.pricing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../progressive/index.html">mapc_optimal.progressive</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">mapc_optimal.solver</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#classes">Classes</a></li>
 <li class="toctree-l5"><a class="reference internal" href="#module-contents">Module Contents</a><ul>
@@ -330,7 +331,7 @@ It can be useful to check if the solver has converged.</p>
   <li><a href="../../../index.html">Documentation overview</a><ul>
   <li><a href="../../index.html">API Reference</a><ul>
   <li><a href="../index.html">mapc_optimal</a><ul>
-      <li>Previous: <a href="../pricing/index.html" title="previous chapter">mapc_optimal.pricing</a></li>
+      <li>Previous: <a href="../progressive/solver/index.html" title="previous chapter">mapc_optimal.progressive.solver</a></li>
       <li>Next: <a href="../utils/index.html" title="next chapter">mapc_optimal.utils</a></li>
   </ul></li>
   </ul></li>

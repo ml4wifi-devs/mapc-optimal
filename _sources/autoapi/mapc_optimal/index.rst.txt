@@ -13,6 +13,7 @@ Submodules
    /autoapi/mapc_optimal/constants/index
    /autoapi/mapc_optimal/main/index
    /autoapi/mapc_optimal/pricing/index
+   /autoapi/mapc_optimal/progressive/index
    /autoapi/mapc_optimal/solver/index
    /autoapi/mapc_optimal/utils/index
 
@@ -24,6 +25,7 @@ Classes
 
    mapc_optimal.Solver
    mapc_optimal.OptimizationType
+   mapc_optimal.ProgressiveSolver
 
 
 Functions
@@ -278,5 +280,58 @@ Package Contents
 
    :returns: Two-dimensional array of path losses (dB) between all nodes.
    :rtype: :py:class:`NDArray`
+
+
+.. py:class:: ProgressiveSolver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, max_iterations = 100, epsilon = 1e-05, solver = None)
+
+   .. py:attribute:: stations
+
+
+   .. py:attribute:: access_points
+
+
+   .. py:attribute:: mcs_values
+
+
+   .. py:attribute:: mcs_data_rates
+      :value: None
+
+
+
+   .. py:attribute:: min_sinr
+
+
+   .. py:attribute:: max_tx_power
+
+
+   .. py:attribute:: min_tx_power
+
+
+   .. py:attribute:: noise_floor
+
+
+   .. py:attribute:: max_iterations
+      :value: 100
+
+
+
+   .. py:attribute:: epsilon
+      :value: 1e-05
+
+
+
+   .. py:attribute:: solver
+
+
+   .. py:attribute:: M
+
+
+   .. py:attribute:: main
+
+
+   .. py:attribute:: pricing
+
+
+   .. py:method:: __call__(path_loss, associations)
 
 
