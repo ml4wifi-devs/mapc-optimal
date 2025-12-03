@@ -111,8 +111,6 @@ class Solver:
         l_val: float
     ) -> tuple[dict, list]:
         
-        print("Solving CG phase for stations:", target_stations)
-
         for _ in range(self.max_iterations):
             main_result, main_objective = self.main(
                 stations=problem_data['stations'],
@@ -264,5 +262,4 @@ class Solver:
         }
 
         total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
-        all_pricing_objectives = [item for sublist in pricing_objectives_log for item in sublist]
-        return result, total_rate, all_pricing_objectives
+        return result, total_rate, pricing_objectives_log
