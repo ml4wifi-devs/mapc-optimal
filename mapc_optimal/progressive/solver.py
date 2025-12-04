@@ -160,6 +160,7 @@ class Solver:
         
         active_stations = list(problem_data['stations'])
         pricing_objectives = []
+        final_configurations = []
 
         while active_stations:
             rho = {s: 0.0 for s in problem_data['stations']}
@@ -204,13 +205,21 @@ class Solver:
                     configurations_to_remove = []
                     
                     for t, weight in main_result['shares'].items():
-                        if weight > self.epsilon and s_prime in [problem_data['link_node_b'][l] for l in configuration['conf_links'][t]]:
-                            for l, rate in configuration['conf_link_rates'][t].items():
-                                sta = problem_data['link_node_b'][l]
+                        stas = [problem_data['link_node_b'][l] for l in configuration['conf_links'][t]]
+
+                        if weight > self.epsilon and s_prime in stas:
+                            for sta, rate in zip(stas, configuration['conf_link_rates'][t].values()):
                                 sigma[sta] += weight * rate
                             
                             l_curr += weight
                             configurations_to_remove.append(t)
+                            final_configurations.append({
+                                'links': configuration['conf_links'][t],
+                                'link_rates': configuration['conf_link_rates'][t],
+                                'total_rates': configuration['conf_total_rates'][t],
+                                'tx_power': {l: lin_to_dbm(p).item() for l, p in configuration['conf_link_tx_power'][t].items()},
+                                'share': weight
+                            })
 
                     for t in configurations_to_remove:
                         configuration['confs'].remove(t)
@@ -227,13 +236,12 @@ class Solver:
             if l_curr >= 1.0 - self.epsilon:
                 break
 
-        non_zero_confs = [t for t, weight in main_result['shares'].items() if weight > self.epsilon]
         result = {
-            'links': {c: configuration['conf_links'][c] for c in non_zero_confs},
-            'link_rates': {c: configuration['conf_link_rates'][c] for c in non_zero_confs},
-            'total_rates': {c: configuration['conf_total_rates'][c] for c in non_zero_confs},
-            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in configuration['conf_link_tx_power'][c].items()} for c in non_zero_confs},
-            'shares': {c: main_result['shares'][c] for c in non_zero_confs}
+            'links': {i: conf['links'] for i, conf in enumerate(final_configurations)},
+            'link_rates': {i: conf['link_rates'] for i, conf in enumerate(final_configurations)},
+            'total_rates': {i: conf['total_rates'] for i, conf in enumerate(final_configurations)},
+            'tx_power': {i: conf['tx_power'] for i, conf in enumerate(final_configurations)},
+            'shares': {i: conf['share'] for i, conf in enumerate(final_configurations)}
         }
         total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
 
