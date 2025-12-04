@@ -95,8 +95,8 @@ class Solver:
             if weight <= 0:
                 continue
 
-            for link, rate in conf_link_rates[t].items():
-                sta = link_node_b[link]
+            for l, rate in conf_link_rates[t].items():
+                sta = link_node_b[l]
                 rates[sta] += weight * rate
         
         return rates
@@ -204,9 +204,9 @@ class Solver:
                     configurations_to_remove = []
                     
                     for t, weight in main_result['shares'].items():
-                        if weight > self.epsilon and s_prime in configuration['conf_links'][t]:
-                            for link, rate in configuration['conf_link_rates'][t].items():
-                                sta = problem_data['link_node_b'][link]
+                        if weight > self.epsilon and s_prime in [problem_data['link_node_b'][l] for l in configuration['conf_links'][t]]:
+                            for l, rate in configuration['conf_link_rates'][t].items():
+                                sta = problem_data['link_node_b'][l]
                                 sigma[sta] += weight * rate
                             
                             l_curr += weight
@@ -227,12 +227,13 @@ class Solver:
             if l_curr >= 1.0 - self.epsilon:
                 break
 
+        non_zero_confs = [t for t, weight in main_result['shares'].items() if weight > self.epsilon]
         result = {
-            'links': configuration['conf_links'],
-            'link_rates': configuration['conf_link_rates'],
-            'total_rates': configuration['conf_total_rates'],
-            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in tx_power.items()} for c, tx_power in configuration['conf_link_tx_power'].items()},
-            'shares': main_result['shares']
+            'links': {c: configuration['conf_links'][c] for c in non_zero_confs},
+            'link_rates': {c: configuration['conf_link_rates'][c] for c in non_zero_confs},
+            'total_rates': {c: configuration['conf_total_rates'][c] for c in non_zero_confs},
+            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in configuration['conf_link_tx_power'][c].items()} for c in non_zero_confs},
+            'shares': {c: main_result['shares'][c] for c in non_zero_confs}
         }
         total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
 
