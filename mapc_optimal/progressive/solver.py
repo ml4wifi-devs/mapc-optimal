@@ -101,15 +101,16 @@ class Solver:
         
         return rates
 
-    def _solve_cg_phase(
+    def _solve_max_min_problem(
         self,
         target_stations: list,
         problem_data: dict,
         configuration: dict,
         sigma: dict,
         rho: dict,
-        l_val: float
-    ) -> tuple[dict, list]:
+        l_val: float,
+        use_delta: bool
+    ) -> tuple[dict, dict, float]:
         
         for _ in range(self.max_iterations):
             main_result, main_objective = self.main(
@@ -129,6 +130,7 @@ class Solver:
                 dual_beta=main_result['beta'],
                 dual_gamma=main_result['gamma'],
                 dual_delta=main_result['delta'],
+                use_delta=use_delta,
                 stations=problem_data['stations'],
                 access_points=problem_data['access_points'],
                 links=problem_data['links'],
@@ -142,7 +144,7 @@ class Solver:
             if abs(pricing_objective) <= self.epsilon:
                 break
         
-        return main_result, pricing_objective
+        return configuration, main_result, pricing_objective
 
     def __call__(self, path_loss: NDArray, associations: dict) -> tuple[dict, float, list]:
         path_loss = dbm_to_lin(path_loss)
@@ -150,8 +152,7 @@ class Solver:
 
         l_curr = 0.0
         sigma = {s: 0.0 for s in problem_data['stations']}
-        final_R = {}
-        final_W = [] 
+        final_configuration = [] 
 
         configuration = self.pricing.initial_configuration(
             links=problem_data['links'],
@@ -159,20 +160,21 @@ class Solver:
         )
         
         active_stations = list(problem_data['stations'])
-        pricing_objectives_log = []
+        pricing_objectives = []
 
         while active_stations:
             rho = {s: 0.0 for s in problem_data['stations']}
 
-            global_result, global_history = self._solve_cg_phase(
+            configuration, global_result, global_objective = self._solve_max_min_problem(
                 target_stations=active_stations,
                 problem_data=problem_data,
                 configuration=configuration,
                 sigma=sigma,
                 rho=rho,
-                l_val=l_curr
+                l_val=l_curr,
+                use_delta=False
             )
-            pricing_objectives_log.append(global_history)
+            pricing_objectives.append(global_objective)
 
             rho_global = self._calculate_station_rates(
                 global_result['shares'], 
@@ -183,13 +185,14 @@ class Solver:
             stations_to_remove = []
             
             for s_prime in active_stations:
-                single_result, _ = self._solve_cg_phase(
+                configuration, single_result, _ = self._solve_max_min_problem(
                     target_stations=[s_prime],
                     problem_data=problem_data,
                     configuration=configuration,
                     sigma=sigma,
                     rho=rho_global,
-                    l_val=l_curr
+                    l_val=l_curr,
+                    use_delta=True
                 )
                 
                 rho_single = self._calculate_station_rates(
@@ -198,68 +201,44 @@ class Solver:
                     problem_data['link_node_b']
                 )
                 
-                if abs(rho_single.get(s_prime, 0.0) - rho_global.get(s_prime, 0.0)) <= self.epsilon:
+                if abs(rho_single[s_prime] - rho_global[s_prime]) <= self.epsilon:
                     configurations_to_remove = []
                     
-                    for t, w_t in single_result['shares'].items():
-                        if w_t > self.epsilon:
-                            rates_in_t = configuration['conf_link_rates'][t]
-                            s_prime_rate_in_t = sum(r for l, r in rates_in_t.items() if problem_data['link_node_b'][l] == s_prime)
-
-                            if s_prime_rate_in_t > 0:
-                                involved_stations = {problem_data['link_node_b'][l] for l, r in rates_in_t.items() if r > 0}
-                                
-                                for s_inv in involved_stations:
-                                    rate_inv = sum(r for l, r in rates_in_t.items() if problem_data['link_node_b'][l] == s_inv)
-                                    sigma[s_inv] += w_t * rate_inv
-                                
-                                final_W.append({
-                                    'id': t,
-                                    'weight': w_t,
-                                    'links': configuration['conf_links'][t],
-                                    'rates': configuration['conf_link_rates'][t],
-                                    'total_rate': configuration['conf_total_rates'][t],
-                                    'tx_power': configuration['conf_link_tx_power'][t]
-                                })
-                                l_curr += w_t
-                                configurations_to_remove.append(t)
+                    for t, weight in single_result['shares'].items():
+                        if weight > self.epsilon and s_prime in configuration['conf_links'][t]:
+                            for link, rate in configuration['conf_link_rates'][t].items():
+                                sta = problem_data['link_node_b'][link]
+                                sigma[sta] += weight * rate
+                            
+                            final_configuration.append({
+                                'weight': weight,
+                                'links': configuration['conf_links'][t],
+                                'rates': configuration['conf_link_rates'][t],
+                                'total_rate': configuration['conf_total_rates'][t],
+                                'tx_power': configuration['conf_link_tx_power'][t]
+                            })
+                            l_curr += weight
+                            configurations_to_remove.append(t)
 
                     for t in configurations_to_remove:
-                        configuration['confs'] = [c for c in configuration['confs'] if c != t]
+                        configuration['confs'].remove(t)
                         del configuration['conf_links'][t]
                         del configuration['conf_link_rates'][t]
                         del configuration['conf_total_rates'][t]
                         del configuration['conf_link_tx_power'][t]
 
-                    final_R[s_prime] = sigma[s_prime]
                     stations_to_remove.append(s_prime)
             
             for s in stations_to_remove:
                 active_stations.remove(s)
-            
-            if not stations_to_remove and (l_curr >= 1.0 - self.epsilon or not active_stations):
-                break
-                
-        result_links = {}
-        result_link_rates = {}
-        result_total_rates = {}
-        result_tx_powers = {}
-        result_shares = {}
-        
-        for idx, item in enumerate(final_W):
-            result_links[idx] = item['links']
-            result_link_rates[idx] = item['rates']
-            result_total_rates[idx] = item['total_rate']
-            result_tx_powers[idx] = {l: lin_to_dbm(p).item() for l, p in item['tx_power'].items()}
-            result_shares[idx] = item['weight']
 
         result = {
-            'links': result_links,
-            'link_rates': result_link_rates,
-            'total_rates': result_total_rates,
-            'tx_power': result_tx_powers,
-            'shares': result_shares
+            'links': {idx: item['links'] for idx, item in enumerate(final_configuration)},
+            'link_rates': {idx: item['rates'] for idx, item in enumerate(final_configuration)},
+            'total_rates': {idx: item['total_rate'] for idx, item in enumerate(final_configuration)},
+            'tx_power': {idx: {l: lin_to_dbm(p).item() for l, p in item['tx_power'].items()} for idx, item in enumerate(final_configuration)},
+            'shares': {idx: item['weight'] for idx, item in enumerate(final_configuration)}
         }
 
         total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
-        return result, total_rate, pricing_objectives_log
+        return result, total_rate, pricing_objectives

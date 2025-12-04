@@ -48,6 +48,7 @@ class Pricing:
             dual_beta: dict,
             dual_gamma: dict,
             dual_delta: dict,
+            use_delta: bool,
             stations: list,
             access_points: list,
             links: list,
@@ -101,12 +102,19 @@ class Pricing:
             # data rate obtained in link (on the basis of the switched-on MCS modes)
             pricing += link_data_rate[l] == plp.lpSum(self.mcs_rate_diff[m] * link_mcs[l, m] for m in self.mcs_values), f'link_data_rate_{l}_c'
 
-        pricing += (
-            - dual_alpha
-            + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
-            + plp.lpSum(dual_gamma[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
-            + plp.lpSum(dual_delta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
-        ), 'tx_set_throughput_g'
+        if use_delta:
+            pricing += (
+                - dual_alpha
+                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+                + plp.lpSum(dual_gamma[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+                + plp.lpSum(dual_delta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+            ), 'tx_set_throughput_g'
+        else:
+            pricing += (
+                - dual_alpha
+                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+                + plp.lpSum(dual_gamma[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
+            ), 'tx_set_throughput_g'
 
         pricing.link_on = link_on
         pricing.link_data_rate = link_data_rate
