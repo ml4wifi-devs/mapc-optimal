@@ -115,7 +115,7 @@ class Solver:
         for _ in range(self.max_iterations):
             main_result, main_objective = self.main(
                 stations=problem_data['stations'],
-                selected_stations=target_stations,
+                target_stations=target_stations,
                 link_node_b=problem_data['link_node_b'],
                 conf_links=configuration['conf_links'],
                 conf_link_rates=configuration['conf_link_rates'],
@@ -152,7 +152,6 @@ class Solver:
 
         l_curr = 0.0
         sigma = {s: 0.0 for s in problem_data['stations']}
-        final_configuration = [] 
 
         configuration = self.pricing.initial_configuration(
             links=problem_data['links'],
@@ -165,7 +164,7 @@ class Solver:
         while active_stations:
             rho = {s: 0.0 for s in problem_data['stations']}
 
-            configuration, global_result, global_objective = self._solve_max_min_problem(
+            configuration, main_result, global_objective = self._solve_max_min_problem(
                 target_stations=active_stations,
                 problem_data=problem_data,
                 configuration=configuration,
@@ -177,7 +176,7 @@ class Solver:
             pricing_objectives.append(global_objective)
 
             rho_global = self._calculate_station_rates(
-                global_result['shares'], 
+                main_result['shares'], 
                 configuration['conf_link_rates'], 
                 problem_data['link_node_b']
             )
@@ -185,7 +184,7 @@ class Solver:
             stations_to_remove = []
             
             for s_prime in active_stations:
-                configuration, single_result, _ = self._solve_max_min_problem(
+                configuration, main_result, single_objective = self._solve_max_min_problem(
                     target_stations=[s_prime],
                     problem_data=problem_data,
                     configuration=configuration,
@@ -196,27 +195,20 @@ class Solver:
                 )
                 
                 rho_single = self._calculate_station_rates(
-                    single_result['shares'], 
+                    main_result['shares'], 
                     configuration['conf_link_rates'], 
                     problem_data['link_node_b']
                 )
                 
-                if abs(rho_single[s_prime] - rho_global[s_prime]) <= self.epsilon:
+                if abs(rho_single[s_prime] - rho_global[s_prime]) <= self.epsilon or abs(single_objective) > self.epsilon:
                     configurations_to_remove = []
                     
-                    for t, weight in single_result['shares'].items():
+                    for t, weight in main_result['shares'].items():
                         if weight > self.epsilon and s_prime in configuration['conf_links'][t]:
                             for link, rate in configuration['conf_link_rates'][t].items():
                                 sta = problem_data['link_node_b'][link]
                                 sigma[sta] += weight * rate
                             
-                            final_configuration.append({
-                                'weight': weight,
-                                'links': configuration['conf_links'][t],
-                                'rates': configuration['conf_link_rates'][t],
-                                'total_rate': configuration['conf_total_rates'][t],
-                                'tx_power': configuration['conf_link_tx_power'][t]
-                            })
                             l_curr += weight
                             configurations_to_remove.append(t)
 
@@ -231,14 +223,17 @@ class Solver:
             
             for s in stations_to_remove:
                 active_stations.remove(s)
+            
+            if l_curr >= 1.0 - self.epsilon:
+                break
 
         result = {
-            'links': {idx: item['links'] for idx, item in enumerate(final_configuration)},
-            'link_rates': {idx: item['rates'] for idx, item in enumerate(final_configuration)},
-            'total_rates': {idx: item['total_rate'] for idx, item in enumerate(final_configuration)},
-            'tx_power': {idx: {l: lin_to_dbm(p).item() for l, p in item['tx_power'].items()} for idx, item in enumerate(final_configuration)},
-            'shares': {idx: item['weight'] for idx, item in enumerate(final_configuration)}
+            'links': configuration['conf_links'],
+            'link_rates': configuration['conf_link_rates'],
+            'total_rates': configuration['conf_total_rates'],
+            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in tx_power.items()} for c, tx_power in configuration['conf_link_tx_power'].items()},
+            'shares': main_result['shares']
         }
-
         total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
+
         return result, total_rate, pricing_objectives

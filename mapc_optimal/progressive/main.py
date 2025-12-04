@@ -9,7 +9,7 @@ class Main:
     def __call__(
             self,
             stations: list,
-            selected_stations: list,
+            target_stations: list,
             link_node_b: dict,
             conf_links: dict,
             conf_link_rates: dict,
@@ -38,7 +38,7 @@ class Main:
             main += node_throughput[s] >= sigma[s] - y, f'sigma_{s}_c'  # dual: gamma
             main += node_throughput[s] >= rho[s] - y, f'rho_{s}_c'  # dual: delta
         
-        for s in selected_stations:
+        for s in target_stations:
             main += node_throughput[s] >= min_throughput, f'worst_throughput_{s}_c'
 
         main += min_throughput - self.M * y, 'min_throughput_baseline_g'
