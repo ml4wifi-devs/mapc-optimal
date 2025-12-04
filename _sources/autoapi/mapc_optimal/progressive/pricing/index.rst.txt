@@ -44,6 +44,6 @@ Module Contents
    .. py:method:: initial_configuration(links, link_path_loss)
 
 
-   .. py:method:: __call__(dual_alpha, dual_beta, dual_gamma, dual_delta, stations, access_points, links, link_node_a, link_node_b, link_path_loss, max_interference, configuration)
+   .. py:method:: __call__(dual_alpha, dual_beta, dual_gamma, dual_delta, use_delta, stations, access_points, links, link_node_a, link_node_b, link_path_loss, max_interference, configuration)
 
 
