@@ -134,7 +134,8 @@ class Main:
             'alpha': main.constraints['conf_weight_c'].pi,
             'beta': beta_dual,
             'gamma': gamma_dual,
-            'shares': {c: main.conf_weight[c].varValue for c in confs}
+            'shares': {c: main.conf_weight[c].varValue for c in confs},
+            'baseline_violation': y.varValue
         }
 
         return result, plp.value(main.objective)

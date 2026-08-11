@@ -73,11 +73,39 @@ class Pricing:
         mcs = (self.max_tx_power >= self.min_sinr * path_loss * self.noise_floor).sum()
         return self.mcs_data_rates[mcs - 1]
 
-    def initial_configuration(self, links: list, link_path_loss: dict) -> dict:
+    def _conf_rate(self, link: tuple, conf: dict, links: list, link_path_loss: dict) -> float:
+        """
+        Calculates the data rate of a link in a configuration where multiple links transmit simultaneously.
+        The interference is calculated in the same way as in the pricing problem.
+
+        Parameters
+        ----------
+        link : tuple
+            The link for which the data rate is calculated.
+        conf : dict
+            Dictionary mapping the links of the configuration to their transmission power.
+        links : list
+            List of the links in the network.
+        link_path_loss : dict
+            Dictionary containing the path loss of each link.
+
+        Returns
+        -------
+        rate : float
+            Data rate of the link.
+        """
+
+        interference = self.noise_floor * sum(1 for l in links if l[0] != link[0]) + sum(
+            p / link_path_loss[i[0], link[1]] for i, p in conf.items() if i[0] != link[0]
+        )
+        mcs = (conf[link] / link_path_loss[link] >= self.min_sinr * interference).sum()
+        return self.mcs_data_rates[mcs - 1] if mcs > 0 else 0.
+
+    def initial_configuration(self, links: list, link_path_loss: dict, configurations: list = None) -> dict:
         """
         Generates the initial configuration for the solver. The initial configurations are very simple, they contain
         only one link, with the best possible data rate and the maximum transmission power. The initial configurations
-        include all the links in the network.
+        include all the links in the network. Optionally, custom configurations can be added.
 
         Parameters
         ----------
@@ -85,6 +113,8 @@ class Pricing:
             List of the links in the network.
         link_path_loss : dict
             Dictionary containing the path loss of each link.
+        configurations : list, default=None
+            List of custom configurations, each being a dictionary mapping links to their transmission power.
 
         Returns
         -------
@@ -103,8 +133,23 @@ class Pricing:
             configuration['conf_link_rates'][c][l] = self._best_rate(link_path_loss[l])
             configuration['conf_link_tx_power'][c][l] = self.max_tx_power
 
+        conf_num = len(links) + 1
+
+        for conf in (configurations or []):
+            rates = {l: self._conf_rate(l, conf, links, link_path_loss) for l in conf}
+            rates = {l: r for l, r in rates.items() if r > 0}
+
+            if not rates:
+                continue
+
+            configuration['conf_links'][conf_num] = list(rates)
+            configuration['conf_link_rates'][conf_num] = rates
+            configuration['conf_link_tx_power'][conf_num] = {l: conf[l] for l in rates}
+            conf_num += 1
+
+        configuration['confs'] = range(1, conf_num)
         configuration['conf_total_rates'] = {c: sum(configuration['conf_link_rates'][c].values()) for c in configuration['confs']}
-        configuration['conf_num'] = len(links) + 1
+        configuration['conf_num'] = conf_num
 
         return configuration
 

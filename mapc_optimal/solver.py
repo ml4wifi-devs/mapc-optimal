@@ -280,7 +280,8 @@ class Solver:
             path_loss: NDArray,
             associations: dict = None,
             baseline: dict = None,
-            return_objectives: bool = False
+            return_objectives: bool = False,
+            initial_configurations: list = None
     ) -> Union[tuple[dict, float], tuple[dict, float, list[float]]]:
         """
         Solves the MAPC C-SR problem given the path loss between each pair of nodes in the network.
@@ -296,6 +297,9 @@ class Solver:
             Dictionary containing the baseline rates of the links (only used for the max-min optimization with baseline).
         return_objectives : bool, default=False
             Flag indicating whether to return the pricing objective values.
+        initial_configurations : list, default=None
+            List of custom configurations added to the initial ones. Each configuration is a dictionary mapping
+            (AP, station) pairs to the transmission power (dBm) used by the AP.
 
         Returns
         -------
@@ -321,9 +325,16 @@ class Solver:
             else:
                 return {}, 0.
 
+        if initial_configurations is not None:
+            initial_configurations = [{
+                l: min(max(dbm_to_lin(p).item(), self.min_tx_power), self.max_tx_power)
+                for (a, s), p in conf.items() if (l := (f'AP_{a}', f'STA_{s}')) in problem_data['links']
+            } for conf in initial_configurations]
+
         configuration = self.pricing.initial_configuration(
             links=problem_data['links'],
-            link_path_loss=problem_data['link_path_loss']
+            link_path_loss=problem_data['link_path_loss'],
+            configurations=initial_configurations
         )
 
         pricing_objectives = []
@@ -357,6 +368,9 @@ class Solver:
 
             if abs(pricing_objective) <= self.epsilon:
                 break
+
+        if self.opt_type == OptimizationType.MAX_MIN_BASELINE and main_result['baseline_violation'] > self.epsilon:
+            raise Exception('Baseline rates not achievable')
 
         result = {
             'links': configuration['conf_links'],

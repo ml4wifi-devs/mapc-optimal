@@ -38,13 +38,14 @@ DATA_RATES = {
 r"""Data rates for IEEE 802.11be standard, 1 spatial stream, and 800 ns GI (Mb/s)"""
 
 MEAN_SNRS = {
-    20:  np.array([15.160, 13.720, 12.749, 12.315, 11.816, 13.850, 14.639, 15.660, 19.442, 20.892, 28.141, 30.084, 33.888, 35.913]),
-    40:  np.array([13.937, 12.314, 11.807, 11.671, 12.610, 15.901, 17.166, 18.447, 22.386, 23.885, 31.153, 33.082, 36.892, 38.926]),
-    80:  np.array([12.287, 11.475, 11.209, 12.432, 14.802, 18.870, 20.203, 21.485, 25.403, 26.908, 34.376, 36.301, 40.107, 42.129]),
-    160: np.array([11.492, 11.342, 12.263, 14.681, 17.739, 21.901, 23.215, 24.481, 28.421, 29.906, 37.386, 39.310, 43.131, 45.163])
+    20:  np.array([11.816, 11.816, 11.816, 11.816, 11.816, 13.850, 14.639, 15.660, 19.442, 20.892, 28.141, 30.084, 33.888, 35.913]),
+    40:  np.array([11.671, 11.671, 11.671, 11.671, 12.610, 15.901, 17.166, 18.447, 22.386, 23.885, 31.153, 33.082, 36.892, 38.926]),
+    80:  np.array([11.209, 11.209, 11.209, 12.432, 14.802, 18.870, 20.203, 21.485, 25.403, 26.908, 34.376, 36.301, 40.107, 42.129]),
+    160: np.array([11.342, 11.342, 12.263, 14.681, 17.739, 21.901, 23.215, 24.481, 28.421, 29.906, 37.386, 39.310, 43.131, 45.163])
 }
 r"""Parameters of the success probability curves - cdf of the normal distribution with standard deviation of 1.6
-(derived from ns-3 simulations with Nakagami fading)"""
+(derived from ns-3 simulations with Nakagami fading). The values of the lowest MCS values are adjusted so that
+the requirements are non-decreasing."""
 
 MIN_SNRS = {channel_width: MEAN_SNRS[channel_width] + 2.6317658 for channel_width in MEAN_SNRS}
 r"""Minimal SNR values for each MCS (dB) to obtain 95% success probability"""
