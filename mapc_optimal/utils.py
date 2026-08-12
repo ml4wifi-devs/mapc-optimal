@@ -15,6 +15,7 @@ class OptimizationType(Enum):
     MAX_MIN = auto()
     MAX_MIN_BASELINE = auto()
     PROPORTIONAL = auto()
+    LEXICOGRAPHIC = auto()
 
 
 def dbm_to_lin(x: ArrayLike) -> NDArray:

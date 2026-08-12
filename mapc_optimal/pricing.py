@@ -73,7 +73,7 @@ class Pricing:
         mcs = (self.max_tx_power >= self.min_sinr * path_loss * self.noise_floor).sum()
         return self.mcs_data_rates[mcs - 1]
 
-    def _conf_rate(self, link: tuple, conf: dict, links: list, link_path_loss: dict) -> float:
+    def _conf_rate(self, link: tuple, conf: dict, link_path_loss: dict) -> float:
         """
         Calculates the data rate of a link in a configuration where multiple links transmit simultaneously.
         The interference is calculated in the same way as in the pricing problem.
@@ -84,8 +84,6 @@ class Pricing:
             The link for which the data rate is calculated.
         conf : dict
             Dictionary mapping the links of the configuration to their transmission power.
-        links : list
-            List of the links in the network.
         link_path_loss : dict
             Dictionary containing the path loss of each link.
 
@@ -95,9 +93,7 @@ class Pricing:
             Data rate of the link.
         """
 
-        interference = self.noise_floor * sum(1 for l in links if l[0] != link[0]) + sum(
-            p / link_path_loss[i[0], link[1]] for i, p in conf.items() if i[0] != link[0]
-        )
+        interference = self.noise_floor + sum(p / link_path_loss[i[0], link[1]] for i, p in conf.items() if i[0] != link[0])
         mcs = (conf[link] / link_path_loss[link] >= self.min_sinr * interference).sum()
         return self.mcs_data_rates[mcs - 1] if mcs > 0 else 0.
 
@@ -136,7 +132,7 @@ class Pricing:
         conf_num = len(links) + 1
 
         for conf in (configurations or []):
-            rates = {l: self._conf_rate(l, conf, links, link_path_loss) for l in conf}
+            rates = {l: self._conf_rate(l, conf, link_path_loss) for l in conf}
             rates = {l: r for l, r in rates.items() if r > 0}
 
             if not rates:
@@ -157,7 +153,6 @@ class Pricing:
             self,
             dual_alpha: float,
             dual_beta: dict,
-            dual_gamma: dict,
             stations: list,
             access_points: list,
             links: list,
@@ -177,8 +172,6 @@ class Pricing:
             Dual variable of the alpha constraint.
         dual_beta : dict
             Dual variables of the beta constraints.
-        dual_gamma : dict
-            Dual variables of the gamma constraints.
         stations : list
             List of the station nodes.
         access_points : list
@@ -223,8 +216,8 @@ class Pricing:
             a, s = link_node_a[l], link_node_b[l]
 
             # if link is on, then node can transmit with power constrained by min/max power
-            pricing += link_tx_power[l] <= self.max_tx_power * ap_on[a], f'link_tx_power_max_{l}_c'
-            pricing += link_tx_power[l] >= self.min_tx_power * ap_on[a], f'link_tx_power_min_{l}_c'
+            pricing += link_tx_power[l] <= self.max_tx_power * link_on[l], f'link_tx_power_max_{l}_c'
+            pricing += link_tx_power[l] >= self.min_tx_power * link_on[l], f'link_tx_power_min_{l}_c'
 
             for m in self.mcs_values:
                 # the way transmission modes are switched on in a link (incremental switching-on)
@@ -235,10 +228,9 @@ class Pricing:
 
                 # interference level in link
                 pricing += link_interference[l, m] == plp.lpSum(
-                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[link_node_a[l_i], s]) +
-                    self.min_sinr[m] * link_path_loss[l] * self.noise_floor
+                    link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[link_node_a[l_i], s])
                     for l_i in links if link_node_a[l_i] != a
-                ), f'link_interference_{l}_{m}_c1'
+                ) + self.min_sinr[m] * link_path_loss[l] * self.noise_floor, f'link_interference_{l}_{m}_c1'
 
                 # check whether SINR is high enough for transmission with a given MCS
                 pricing += link_tx_power[l] + max_interference[l, m] * (1 - link_mcs[l, m]) >= link_interference[l, m], f'link_interference_{l}_{m}_c2'
@@ -253,18 +245,11 @@ class Pricing:
                 - dual_alpha
                 + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
-        elif self.opt_type == OptimizationType.MAX_MIN:
+        elif self.opt_type in (OptimizationType.MAX_MIN, OptimizationType.MAX_MIN_BASELINE, OptimizationType.LEXICOGRAPHIC):
             # maximization of the worst throughput
             pricing += (
                 - dual_alpha
                 + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
-            ), 'tx_set_throughput_g'
-        elif self.opt_type == OptimizationType.MAX_MIN_BASELINE:
-            # maximization of the worst throughput with the enforcement of the baseline rates
-            pricing += (
-                - dual_alpha
-                + plp.lpSum(dual_beta[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
-                + plp.lpSum(dual_gamma[s] * link_data_rate[l] for s in stations for l in links if link_node_b[l] == s)
             ), 'tx_set_throughput_g'
         elif self.opt_type == OptimizationType.PROPORTIONAL:
             # maximization of the sum of the logarithms of the throughputs
@@ -287,7 +272,7 @@ class Pricing:
         # append the new configuration to the list of configurations
         conf_num = configuration['conf_num']
         configuration['confs'] = range(1, conf_num + 1)
-        configuration['conf_links'][conf_num] = [l for l in links if pricing.link_on[l].varValue == 1]
+        configuration['conf_links'][conf_num] = [l for l in links if pricing.link_on[l].varValue > 0.5]
         configuration['conf_link_rates'][conf_num] = {l: pricing.link_data_rate[l].varValue for l in configuration['conf_links'][conf_num]}
         configuration['conf_link_tx_power'][conf_num] = {l: pricing.link_tx_power[l].varValue for l in configuration['conf_links'][conf_num]}
         configuration['conf_total_rates'][conf_num] = sum(configuration['conf_link_rates'][conf_num].values())

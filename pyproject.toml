@@ -1,6 +1,6 @@
 [project]
 name = "mapc_optimal"
-version = "0.2.1"
+version = "0.3.0"
 description = "Optimal solution of the MAPC (C-SR) problem for IEEE 802.11 networks"
 
 readme = "README.md"

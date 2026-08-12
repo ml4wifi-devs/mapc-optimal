@@ -1,3 +1,4 @@
+import warnings
 from itertools import product
 from typing import Union
 
@@ -15,9 +16,10 @@ class Solver:
     r"""
     The solver class coordinating the overall process of finding the optimal solution.
     It initializes the solver, sets up the network configuration, and manages the iterations.
-    The optimization problem can be formulated in two ways:
+    The optimization problem can be formulated in a few ways, e.g.:
     - the total throughput of the network is maximized,
-    - the worst throughput of each node is maximized.
+    - the worst throughput of each node is maximized,
+    - the vector of the node throughputs is maximized lexicographically.
 
     Examples
     --------
@@ -82,6 +84,7 @@ class Solver:
             max_iterations: int = 100,
             log_segments: int = 10,
             epsilon: float = 1e-5,
+            fix_tolerance: float = 1e-3,
             solver: plp.LpSolver = None
     ) -> None:
         r"""
@@ -124,6 +127,9 @@ class Solver:
             The number of linear function segments used to approximate the logarithm function in proportional fairness setting.
         epsilon: float, default=1e-5
              The minimum value of the pricing objective function to continue the iterations.
+        fix_tolerance: float, default=1e-3
+            The maximum improvement of the throughput of a station (Mb/s) which is still considered as no
+            improvement, i.e., the station gets its throughput fixed in the lexicographic optimization.
         solver: pulp.LpSolver, default=pulp.PULP_CBC_CMD(msg=False)
             The solver used to solve the optimization problems.
         """
@@ -146,6 +152,7 @@ class Solver:
         self.max_iterations = max_iterations
         self.log_approx = self._linearize_log(log_segments)
         self.epsilon = epsilon
+        self.fix_tolerance = fix_tolerance
         self.solver = solver or plp.PULP_CBC_CMD(msg=False)
         self.M = len(stations) * mcs_data_rates[-1]  # Maximum achievable throughput
 
@@ -266,14 +273,167 @@ class Solver:
 
         for l, m in product(links, self.mcs_values):
             max_interference[l, m] = sum(
-                self.max_tx_power * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, problem_data['link_node_b'][l]]) +
-                self.min_sinr[m] * link_path_loss[l] * self.noise_floor
+                self.max_tx_power * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[i, problem_data['link_node_b'][l]])
                 for i in problem_data['access_points'] if i != problem_data['link_node_a'][l]
-            )
+            ) + self.min_sinr[m] * link_path_loss[l] * self.noise_floor
 
         problem_data['link_path_loss'] = link_path_loss
         problem_data['max_interference'] = max_interference
         return problem_data
+
+    def _convert_configurations(self, configurations: list, links: list) -> list:
+        """
+        Converts the custom configurations to the internal representation of the solver, i.e., maps the
+        (AP, station) pairs to the links and the transmission power to the linear scale.
+
+        Parameters
+        ----------
+        configurations : list
+            List of custom configurations, each being a dictionary mapping (AP, station) pairs
+            to the transmission power (dBm) used by the AP.
+        links : list
+            List of the links in the network.
+
+        Returns
+        -------
+        configurations : list
+            List of the converted configurations.
+        """
+
+        return [{
+            l: min(max(dbm_to_lin(p).item(), self.min_tx_power), self.max_tx_power)
+            for (a, s), p in conf.items() if (l := (f'AP_{a}', f'STA_{s}')) in links
+        } for conf in configurations]
+
+    def _column_generation(
+            self,
+            problem_data: dict,
+            configuration: dict,
+            objectives: list,
+            baseline: dict = None,
+            target_stations: list = None
+    ) -> tuple[dict, dict, float]:
+        """
+        Iterates the main and the pricing problems until no new configuration improves the solution.
+
+        Parameters
+        ----------
+        problem_data : dict
+            Dictionary containing the data required for the solver.
+        configuration : dict
+            Dictionary containing all the configurations generated so far.
+        objectives : list
+            List collecting the pricing objective values.
+        baseline : dict, default=None
+            Dictionary containing the baseline rates of the stations.
+        target_stations : list, default=None
+            List of the stations whose worst throughput is maximized. All the stations by default.
+
+        Returns
+        -------
+        result : tuple[dict, dict, float]
+            Tuple containing the configurations, the results of the main problem, and the value
+            of the main objective function.
+        """
+
+        # more configurations are needed to meet the baseline, so it is enforced after the first iteration
+        main_baseline = {s: 0. for s in baseline} if self.opt_type == OptimizationType.MAX_MIN_BASELINE else baseline
+
+        for _ in range(self.max_iterations):
+            main_result, main_objective = self.main(
+                stations=problem_data['stations'],
+                link_node_b=problem_data['link_node_b'],
+                conf_links=configuration['conf_links'],
+                conf_link_rates=configuration['conf_link_rates'],
+                conf_total_rates=configuration['conf_total_rates'],
+                confs=configuration['confs'],
+                baseline=main_baseline,
+                target_stations=target_stations
+            )
+            main_baseline = baseline
+
+            configuration, pricing_objective = self.pricing(
+                dual_alpha=main_result['alpha'],
+                dual_beta=main_result['beta'],
+                stations=problem_data['stations'],
+                access_points=problem_data['access_points'],
+                links=problem_data['links'],
+                link_node_a=problem_data['link_node_a'],
+                link_node_b=problem_data['link_node_b'],
+                link_path_loss=problem_data['link_path_loss'],
+                max_interference=problem_data['max_interference'],
+                configuration=configuration
+            )
+            objectives.append(pricing_objective)
+
+            if pricing_objective <= self.epsilon:
+                break
+        else:
+            warnings.warn(
+                f'Column generation did not converge in {self.max_iterations} iterations (the pricing objective is '
+                f'{pricing_objective:.4g}), so the returned solution can be suboptimal.'
+            )
+
+        return configuration, main_result, main_objective
+
+    def _lexicographic(
+            self,
+            problem_data: dict,
+            configuration: dict,
+            objectives: list,
+            baseline: dict = None
+    ) -> tuple[dict, dict]:
+        """
+        Finds the lexicographically maximal vector of the station throughputs. After each max-min problem,
+        a separate problem is solved for every station to detect the stations which cannot be improved above
+        the obtained worst throughput. Their throughput is fixed at that level and they are excluded from the
+        following steps. All the generated configurations are shared between the problems and never removed.
+
+        Parameters
+        ----------
+        problem_data : dict
+            Dictionary containing the data required for the solver.
+        configuration : dict
+            Dictionary containing the initial configurations.
+        objectives : list
+            List collecting the pricing objective values.
+        baseline : dict, default=None
+            Dictionary containing the baseline rates of the stations.
+
+        Returns
+        -------
+        result : tuple[dict, dict]
+            Tuple containing the configurations and the results of the main problem.
+        """
+
+        stations = problem_data['stations']
+        lower_bounds = dict(baseline) if baseline is not None else {s: 0. for s in stations}
+        active = list(stations)
+
+        while active:
+            configuration, main_result, min_rate = self._column_generation(
+                problem_data, configuration, objectives, lower_bounds, active
+            )
+            if len(active) > 1:
+                best_rates = {}
+
+                for s in active:
+                    # the other active stations are not allowed to drop below the worst throughput
+                    bounds = {t: min_rate if t != s and t in active else lower_bounds[t] for t in stations}
+                    configuration, _, best_rates[s] = self._column_generation(
+                        problem_data, configuration, objectives, bounds, [s]
+                    )
+
+                fixed = [s for s in active if best_rates[s] <= min_rate + self.fix_tolerance]
+                fixed = fixed or [min(best_rates, key=best_rates.get)]
+            else:
+                fixed = list(active)
+
+            for s in fixed:
+                lower_bounds[s] = min_rate
+                active.remove(s)
+
+        return configuration, main_result
 
     def __call__(
             self, 
@@ -294,7 +454,8 @@ class Solver:
         associations : dict
             The dictionary of associations between APs and stations.
         baseline : dict, default=None
-            Dictionary containing the baseline rates of the links (only used for the max-min optimization with baseline).
+            Dictionary containing the baseline rates of the links. Required by the max-min optimization with
+            baseline and optional in the lexicographic one, where it sets the initial minimum throughputs.
         return_objectives : bool, default=False
             Flag indicating whether to return the pricing objective values.
         initial_configurations : list, default=None
@@ -312,10 +473,6 @@ class Solver:
         assert not self.opt_type == OptimizationType.MAX_MIN_BASELINE or baseline is not None, \
             'Baseline rates must be provided for the max-min optimization with baseline.'
 
-        main_baseline = None
-        if baseline is not None:
-            main_baseline = {sta: 0.0 for sta in baseline}
-
         path_loss = dbm_to_lin(path_loss)
         problem_data = self._generate_data(path_loss, associations)
 
@@ -326,10 +483,7 @@ class Solver:
                 return {}, 0.
 
         if initial_configurations is not None:
-            initial_configurations = [{
-                l: min(max(dbm_to_lin(p).item(), self.min_tx_power), self.max_tx_power)
-                for (a, s), p in conf.items() if (l := (f'AP_{a}', f'STA_{s}')) in problem_data['links']
-            } for conf in initial_configurations]
+            initial_configurations = self._convert_configurations(initial_configurations, problem_data['links'])
 
         configuration = self.pricing.initial_configuration(
             links=problem_data['links'],
@@ -339,47 +493,23 @@ class Solver:
 
         pricing_objectives = []
 
-        for _ in range(self.max_iterations):
-            main_result, main_objective = self.main(
-                stations=problem_data['stations'],
-                link_node_b=problem_data['link_node_b'],
-                conf_links=configuration['conf_links'],
-                conf_link_rates=configuration['conf_link_rates'],
-                conf_total_rates=configuration['conf_total_rates'],
-                confs=configuration['confs'],
-                baseline=main_baseline
-            )
-            main_baseline = baseline
-
-            configuration, pricing_objective = self.pricing(
-                dual_alpha=main_result['alpha'],
-                dual_beta=main_result['beta'],
-                dual_gamma=main_result['gamma'],
-                stations=problem_data['stations'],
-                access_points=problem_data['access_points'],
-                links=problem_data['links'],
-                link_node_a=problem_data['link_node_a'],
-                link_node_b=problem_data['link_node_b'],
-                link_path_loss=problem_data['link_path_loss'],
-                max_interference=problem_data['max_interference'],
-                configuration=configuration
-            )
-            pricing_objectives.append(pricing_objective)
-
-            if abs(pricing_objective) <= self.epsilon:
-                break
+        if self.opt_type == OptimizationType.LEXICOGRAPHIC:
+            configuration, main_result = self._lexicographic(problem_data, configuration, pricing_objectives, baseline)
+        else:
+            configuration, main_result, _ = self._column_generation(problem_data, configuration, pricing_objectives, baseline)
 
         if self.opt_type == OptimizationType.MAX_MIN_BASELINE and main_result['baseline_violation'] > self.epsilon:
             raise Exception('Baseline rates not achievable')
 
+        shares = main_result['shares']
         result = {
-            'links': configuration['conf_links'],
-            'link_rates': configuration['conf_link_rates'],
-            'total_rates': configuration['conf_total_rates'],
-            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in tx_power.items()} for c, tx_power in configuration['conf_link_tx_power'].items()},
-            'shares': main_result['shares']
+            'links': {c: configuration['conf_links'][c] for c in shares},
+            'link_rates': {c: configuration['conf_link_rates'][c] for c in shares},
+            'total_rates': {c: configuration['conf_total_rates'][c] for c in shares},
+            'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in configuration['conf_link_tx_power'][c].items()} for c in shares},
+            'shares': shares
         }
-        total_rate = sum(result['total_rates'][c] * result['shares'][c] for c in result['shares'])
+        total_rate = sum(result['total_rates'][c] * shares[c] for c in shares)
 
         if return_objectives:
             return result, total_rate, pricing_objectives
