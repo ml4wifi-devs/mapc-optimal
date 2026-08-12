@@ -97,6 +97,9 @@ Module Contents
    .. py:attribute:: PROPORTIONAL
 
 
+   .. py:attribute:: LEXICOGRAPHIC
+
+
 .. py:function:: dbm_to_lin(x)
 
    Converts dBm to a linear scale.

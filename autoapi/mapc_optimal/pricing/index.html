@@ -15,7 +15,7 @@
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="mapc_optimal.progressive" href="../progressive/index.html" />
+    <link rel="next" title="mapc_optimal.solver" href="../solver/index.html" />
     <link rel="prev" title="mapc_optimal.main" href="../main/index.html" />
    
   <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
@@ -119,15 +119,16 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mapc_optimal.pricing.Pricing.initial_configuration">
-<span class="sig-name descname"><span class="pre">initial_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_path_loss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.pricing.Pricing.initial_configuration" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">initial_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_path_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configurations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.pricing.Pricing.initial_configuration" title="Link to this definition">¶</a></dt>
 <dd><p>Generates the initial configuration for the solver. The initial configurations are very simple, they contain
 only one link, with the best possible data rate and the maximum transmission power. The initial configurations
-include all the links in the network.</p>
+include all the links in the network. Optionally, custom configurations can be added.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>links</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – List of the links in the network.</p></li>
 <li><p><strong>link_path_loss</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>) – Dictionary containing the path loss of each link.</p></li>
+<li><p><strong>configurations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <em>default</em> <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>) – List of custom configurations, each being a dictionary mapping links to their transmission power.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -141,7 +142,7 @@ include all the links in the network.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="mapc_optimal.pricing.Pricing.__call__">
-<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dual_alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dual_beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dual_gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_node_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_node_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_path_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.pricing.Pricing.__call__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dual_alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dual_beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">links</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_node_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_node_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">link_path_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configuration</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.pricing.Pricing.__call__" title="Link to this definition">¶</a></dt>
 <dd><p>Solves the pricing problem given the dual variables of the main problem.
 Returns all the configurations and the value of the objective function.</p>
 <dl class="field-list simple">
@@ -149,7 +150,6 @@ Returns all the configurations and the value of the objective function.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dual_alpha</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Dual variable of the alpha constraint.</p></li>
 <li><p><strong>dual_beta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>) – Dual variables of the beta constraints.</p></li>
-<li><p><strong>dual_gamma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>) – Dual variables of the gamma constraints.</p></li>
 <li><p><strong>stations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – List of the station nodes.</p></li>
 <li><p><strong>access_points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – List of the access point nodes.</p></li>
 <li><p><strong>links</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – List of the links in the network.</p></li>
@@ -236,7 +236,6 @@ Returns all the configurations and the value of the objective function.</p>
 </li>
 </ul>
 </li>
-<li class="toctree-l4"><a class="reference internal" href="../progressive/index.html">mapc_optimal.progressive</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../solver/index.html">mapc_optimal.solver</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../utils/index.html">mapc_optimal.utils</a></li>
 </ul>
@@ -257,7 +256,7 @@ Returns all the configurations and the value of the objective function.</p>
   <li><a href="../../index.html">API Reference</a><ul>
   <li><a href="../index.html">mapc_optimal</a><ul>
       <li>Previous: <a href="../main/index.html" title="previous chapter">mapc_optimal.main</a></li>
-      <li>Next: <a href="../progressive/index.html" title="next chapter">mapc_optimal.progressive</a></li>
+      <li>Next: <a href="../solver/index.html" title="next chapter">mapc_optimal.solver</a></li>
   </ul></li>
   </ul></li>
   </ul></li>
@@ -276,7 +275,7 @@ Returns all the configurations and the value of the objective function.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
+      &#169;2026, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
       
       |
       <a href="../../../_sources/autoapi/mapc_optimal/pricing/index.rst.txt"

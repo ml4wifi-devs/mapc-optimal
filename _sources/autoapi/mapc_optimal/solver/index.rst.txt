@@ -15,13 +15,14 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: Solver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, opt_type = OptimizationType.MAX_MIN, max_iterations = 100, log_segments = 10, epsilon = 1e-05, solver = None)
+.. py:class:: Solver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, opt_type = OptimizationType.MAX_MIN, max_iterations = 100, log_segments = 10, epsilon = 1e-05, fix_tolerance = 0.001, solver = None)
 
    The solver class coordinating the overall process of finding the optimal solution.
    It initializes the solver, sets up the network configuration, and manages the iterations.
-   The optimization problem can be formulated in two ways:
+   The optimization problem can be formulated in a few ways, e.g.:
    - the total throughput of the network is maximized,
-   - the worst throughput of each node is maximized.
+   - the worst throughput of each node is maximized,
+   - the vector of the node throughputs is maximized lexicographically.
 
    .. rubric:: Examples
 
@@ -106,6 +107,9 @@ Module Contents
    :type log_segments: :py:class:`int`, *default* ``10``
    :param epsilon: The minimum value of the pricing objective function to continue the iterations.
    :type epsilon: :py:class:`float`, *default* ``1e-5``
+   :param fix_tolerance: The maximum improvement of the throughput of a station (Mb/s) which is still considered as no
+                         improvement, i.e., the station gets its throughput fixed in the lexicographic optimization.
+   :type fix_tolerance: :py:class:`float`, *default* ``1e-3``
    :param solver: The solver used to solve the optimization problems.
    :type solver: :py:class:`pulp.LpSolver`, *default* :py:class:`pulp.PULP_CBC_CMD(msg=False)`
 
@@ -152,6 +156,11 @@ Module Contents
 
 
 
+   .. py:attribute:: fix_tolerance
+      :value: 0.001
+
+
+
    .. py:attribute:: solver
 
 
@@ -164,7 +173,7 @@ Module Contents
    .. py:attribute:: pricing
 
 
-   .. py:method:: __call__(path_loss, associations = None, baseline = None, return_objectives = False)
+   .. py:method:: __call__(path_loss, associations = None, baseline = None, return_objectives = False, initial_configurations = None)
 
       Solves the MAPC C-SR problem given the path loss between each pair of nodes in the network.
       Returns the final configurations, the time shares, and the total throughput.
@@ -173,10 +182,14 @@ Module Contents
       :type path_loss: :py:class:`NDArray`
       :param associations: The dictionary of associations between APs and stations.
       :type associations: :py:class:`dict`
-      :param baseline: Dictionary containing the baseline rates of the links (only used for the max-min optimization with baseline).
+      :param baseline: Dictionary containing the baseline rates of the links. Required by the max-min optimization with
+                       baseline and optional in the lexicographic one, where it sets the initial minimum throughputs.
       :type baseline: :py:class:`dict`, *default* :py:obj:`None`
       :param return_objectives: Flag indicating whether to return the pricing objective values.
       :type return_objectives: :py:class:`bool`, *default* :py:obj:`False`
+      :param initial_configurations: List of custom configurations added to the initial ones. Each configuration is a dictionary mapping
+                                     (AP, station) pairs to the transmission power (dBm) used by the AP.
+      :type initial_configurations: :py:class:`list`, *default* :py:obj:`None`
 
       :returns: **result** -- Tuple containing the final configurations and the total throughput. Additionally,
                 the solver can return a list of the pricing objective values for each iteration.

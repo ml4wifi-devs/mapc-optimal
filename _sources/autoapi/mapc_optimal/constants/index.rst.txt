@@ -81,7 +81,8 @@ Module Contents
 .. py:data:: MEAN_SNRS
 
    Parameters of the success probability curves - cdf of the normal distribution with standard deviation of 1.6
-   (derived from ns-3 simulations with Nakagami fading)
+   (derived from ns-3 simulations with Nakagami fading). The values of the lowest MCS values are adjusted so that
+   the requirements are non-decreasing.
 
 .. py:data:: MIN_SNRS
 

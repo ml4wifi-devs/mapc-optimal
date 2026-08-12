@@ -69,23 +69,25 @@ Module Contents
    .. py:attribute:: solver
 
 
-   .. py:method:: initial_configuration(links, link_path_loss)
+   .. py:method:: initial_configuration(links, link_path_loss, configurations = None)
 
       Generates the initial configuration for the solver. The initial configurations are very simple, they contain
       only one link, with the best possible data rate and the maximum transmission power. The initial configurations
-      include all the links in the network.
+      include all the links in the network. Optionally, custom configurations can be added.
 
       :param links: List of the links in the network.
       :type links: :py:class:`list`
       :param link_path_loss: Dictionary containing the path loss of each link.
       :type link_path_loss: :py:class:`dict`
+      :param configurations: List of custom configurations, each being a dictionary mapping links to their transmission power.
+      :type configurations: :py:class:`list`, *default* :py:obj:`None`
 
       :returns: **configuration** -- Dictionary containing the initial configuration.
       :rtype: :py:class:`dict`
 
 
 
-   .. py:method:: __call__(dual_alpha, dual_beta, dual_gamma, stations, access_points, links, link_node_a, link_node_b, link_path_loss, max_interference, configuration)
+   .. py:method:: __call__(dual_alpha, dual_beta, stations, access_points, links, link_node_a, link_node_b, link_path_loss, max_interference, configuration)
 
       Solves the pricing problem given the dual variables of the main problem.
       Returns all the configurations and the value of the objective function.
@@ -94,8 +96,6 @@ Module Contents
       :type dual_alpha: :py:class:`float`
       :param dual_beta: Dual variables of the beta constraints.
       :type dual_beta: :py:class:`dict`
-      :param dual_gamma: Dual variables of the gamma constraints.
-      :type dual_gamma: :py:class:`dict`
       :param stations: List of the station nodes.
       :type stations: :py:class:`list`
       :param access_points: List of the access point nodes.

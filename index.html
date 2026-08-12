@@ -49,10 +49,12 @@ on network performance. A detailed description can be found in:</p>
 <li><p><strong>Calculation of optimal scheduling</strong>: Calculate the best
 transmission configurations and the corresponding time division that
 enhance the network performance.</p></li>
-<li><p><strong>Two optimization criteria</strong>: Find the optimal solution for two
-optimization criteria: maximizing the sum of the throughput of all
-nodes in the network and maximizing the minimum throughput of all
-nodes in the network.</p></li>
+<li><p><strong>Multiple optimization criteria</strong>: Find the optimal solution for
+different optimization criteria: maximizing the sum of the throughput
+of all nodes in the network, maximizing the minimum throughput of all
+nodes in the network (optionally above a given baseline), maximizing
+the proportional fairness, and maximizing the vector of the node
+throughputs lexicographically.</p></li>
 <li><p><strong>Modulation and coding scheme (MCS) selection</strong>: Select the
 optimal MCS for each transmission.</p></li>
 <li><p><strong>Transmission power selection</strong>: Set the appropriate transmission power
@@ -90,10 +92,42 @@ The solver returns calculated configurations and the total throughput
 of the network. The <a class="reference internal" href="autoapi/mapc_optimal/index.html#mapc_optimal.Solver" title="mapc_optimal.Solver"><code class="xref py py-class docutils literal notranslate"><span class="pre">mapc_optimal.Solver</span></code></a> class can be further
 configured by passing additional arguments to the constructor.
 The full list of arguments can be found in the documentation.</p>
+<p>The optimization criterion is selected with the <code class="docutils literal notranslate"><span class="pre">opt_type</span></code> argument. Besides maximizing
+the total throughput (<code class="docutils literal notranslate"><span class="pre">OptimizationType.SUM</span></code>) and the worst station throughput
+(<code class="docutils literal notranslate"><span class="pre">OptimizationType.MAX_MIN</span></code>), the solver can maximize the vector of the station
+throughputs lexicographically (<code class="docutils literal notranslate"><span class="pre">OptimizationType.LEXICOGRAPHIC</span></code>), i.e., once the worst
+stations cannot be improved any further, it keeps improving the subsequent worst ones:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mapc_optimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationType</span><span class="p">,</span> <span class="n">Solver</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">stations</span><span class="p">,</span> <span class="n">access_points</span><span class="p">,</span> <span class="n">opt_type</span><span class="o">=</span><span class="n">OptimizationType</span><span class="o">.</span><span class="n">LEXICOGRAPHIC</span><span class="p">)</span>
+<span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">path_loss</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Note</strong> The lexicographic optimization solves a separate problem for each station in every
+step of its outer loop, so it is significantly slower than the other criteria.</p>
+<p>The solver can also guarantee that no station gets less than in some reference solution, e.g.,
+the one obtained with a simulator or a learning agent. With <code class="docutils literal notranslate"><span class="pre">OptimizationType.MAX_MIN_BASELINE</span></code>,
+the worst station throughput is maximized while each station is required to reach its <code class="docutils literal notranslate"><span class="pre">baseline</span></code>
+rate. Since the rates of the reference solution can be hard to reproduce with configurations
+generated from scratch, the configurations used by the reference solution can be added to the
+initial ones with the <code class="docutils literal notranslate"><span class="pre">initial_configurations</span></code> argument. Each of them is a dictionary mapping
+the (AP, station) pairs to the transmission power (dBm) used by the AP:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mapc_optimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationType</span><span class="p">,</span> <span class="n">Solver</span>
+
+<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="n">stations</span><span class="p">,</span> <span class="n">access_points</span><span class="p">,</span> <span class="n">opt_type</span><span class="o">=</span><span class="n">OptimizationType</span><span class="o">.</span><span class="n">MAX_MIN_BASELINE</span><span class="p">)</span>
+<span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span>
+    <span class="n">path_loss</span><span class="p">,</span>
+    <span class="n">baseline</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;STA_1&#39;</span><span class="p">:</span> <span class="mf">10.</span><span class="p">,</span> <span class="s1">&#39;STA_2&#39;</span><span class="p">:</span> <span class="mf">12.</span><span class="p">},</span>
+    <span class="n">initial_configurations</span><span class="o">=</span><span class="p">[{(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="mf">20.</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="mf">16.</span><span class="p">}]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>If the baseline rates cannot be reached, the solver raises an exception. The baseline can also be
+passed to the lexicographic optimization, where it sets the initial minimum throughput of each station.</p>
 <p>Additionally, the solver can return a list of the pricing objective values for each
 iteration. It can be useful to check if the solver has converged. To do so, set the
-<code class="docutils literal notranslate"><span class="pre">return_objective</span></code> argument to <code class="docutils literal notranslate"><span class="pre">True</span></code> when calling the solver.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">objectives</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">path_loss</span><span class="p">,</span> <span class="n">return_objective</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<code class="docutils literal notranslate"><span class="pre">return_objectives</span></code> argument to <code class="docutils literal notranslate"><span class="pre">True</span></code> when calling the solver.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">configurations</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">objectives</span> <span class="o">=</span> <span class="n">solver</span><span class="p">(</span><span class="n">path_loss</span><span class="p">,</span> <span class="n">return_objectives</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>For a more detailed example, refer to the test case in <code class="docutils literal notranslate"><span class="pre">test/test_solver.py</span></code>.</p>
@@ -169,7 +203,7 @@ However, we recommend using a better solver, such as <code class="docutils liter
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
+      &#169;2026, Maksymilian Wojnar, Wojciech Ciężobka, Katarzyna Kosek-Szott, Krzysztof Rusek, Szymon Szott, Piotr Chołda, Artur Tomaszewski.
       
       |
       <a href="_sources/index.rst.txt"
