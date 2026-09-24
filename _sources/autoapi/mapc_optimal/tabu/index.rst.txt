@@ -1,0 +1,109 @@
+mapc_optimal.tabu
+=================
+
+.. py:module:: mapc_optimal.tabu
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   mapc_optimal.tabu.TabuPricing
+
+
+Module Contents
+---------------
+
+.. py:class:: TabuPricing(n_steps = 500, n_candidates = 25, tabu_size = 80, n_restarts = 4, tx_power_levels = 6, seed = 42, evaluator = None, n_draws = 8, **kwargs)
+
+
+
+   The pricing problem solved with heuristic tabu search instead of the MILP model. The configurations
+   are evaluated either with the model of the pricing problem, i.e., with the same channel model and
+   SINR thresholds as in :class:`mapc_optimal.pricing.Pricing`, or with an evaluator given by the user,
+   e.g., a network simulator.
+
+   :param n_steps: The number of tabu search steps in a single run.
+   :type n_steps: :py:class:`int`, *default* ``500``
+   :param n_candidates: The number of neighbors generated in each step.
+   :type n_candidates: :py:class:`int`, *default* ``25``
+   :param tabu_size: The number of the recently visited configurations which cannot be revisited.
+   :type tabu_size: :py:class:`int`, *default* ``80``
+   :param n_restarts: The number of runs of the search, each starting from a random configuration. The best
+                      configuration found in all the runs is returned.
+   :type n_restarts: :py:class:`int`, *default* ``4``
+   :param tx_power_levels: The number of transmission power levels, equally spaced in the logarithmic
+                           scale between the minimum and the maximum transmission power.
+   :type tx_power_levels: :py:class:`int`, *default* ``6``
+   :param seed: The seed of the random number generator.
+   :type seed: :py:class:`int`, *default* ``42``
+   :param evaluator: Function ``evaluator(confs) -> rates`` evaluating all the candidates of a search step at
+                     once, where ``confs`` is a list of dictionaries mapping a transmitting link to a tuple with
+                     its transmission power (in the linear scale) and its MCS, and ``rates`` is a list of
+                     dictionaries mapping the links to their rates (in Mb/s), with the links which cannot
+                     transmit omitted or given a zero rate. The whole batch is passed in one call, so the function
+                     can be vectorized. If it is not set, the rates are calculated with the model of the pricing problem.
+   :type evaluator: :py:class:`Callable`, *default* :py:obj:`None`
+   :param n_draws: The number of calls to the evaluator whose rates are averaged. For a deterministic evaluator,
+                   it should be set to 1.
+   :type n_draws: :py:class:`int`, *default* ``8``
+   :param \*\*kwargs: The arguments of :class:`mapc_optimal.pricing.Pricing`.
+
+
+   .. py:attribute:: n_steps
+      :value: 500
+
+
+
+   .. py:attribute:: n_candidates
+      :value: 25
+
+
+
+   .. py:attribute:: tabu_size
+      :value: 80
+
+
+
+   .. py:attribute:: n_restarts
+      :value: 4
+
+
+
+   .. py:attribute:: mcs_data_rates
+
+
+   .. py:attribute:: tx_power_set
+      :value: ()
+
+
+
+   .. py:attribute:: evaluator
+      :value: None
+
+
+
+   .. py:attribute:: n_draws
+      :value: 8
+
+
+
+   .. py:attribute:: rng
+
+
+   .. py:method:: initial_configuration(links, link_path_loss, configurations = None)
+
+      Generates the initial configurations as :class:`mapc_optimal.pricing.Pricing` does, but, if the
+      evaluator is set, draws the MCS of the links at random and takes their rates from the evaluator,
+      so that all the configurations passed to the main problem are evaluated in the same way.
+
+
+
+   .. py:method:: __call__(dual_alpha, dual_beta, stations, access_points, links, link_node_a, link_node_b, link_path_loss, max_interference, configuration)
+
+      Searches for a configuration which improves the solution of the main problem. The signature is
+      the same as in :class:`mapc_optimal.pricing.Pricing`.
+
+
+

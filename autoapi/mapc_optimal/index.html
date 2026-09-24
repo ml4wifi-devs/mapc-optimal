@@ -45,6 +45,7 @@
 <li class="toctree-l1"><a class="reference internal" href="main/index.html">mapc_optimal.main</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pricing/index.html">mapc_optimal.pricing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="solver/index.html">mapc_optimal.solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tabu/index.html">mapc_optimal.tabu</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils/index.html">mapc_optimal.utils</a></li>
 </ul>
 </div>
@@ -57,6 +58,9 @@
 <td><p>The solver class coordinating the overall process of finding the optimal solution.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#mapc_optimal.OptimizationType" title="mapc_optimal.OptimizationType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OptimizationType</span></code></a></p></td>
+<td><p>Create a collection of name/value pairs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mapc_optimal.PricingType" title="mapc_optimal.PricingType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PricingType</span></code></a></p></td>
 <td><p>Create a collection of name/value pairs.</p></td>
 </tr>
 </tbody>
@@ -76,7 +80,7 @@
 <h2>Package Contents<a class="headerlink" href="#package-contents" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="mapc_optimal.Solver">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mapc_optimal.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_snr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MAX_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOISE_FLOOR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimizationType.MAX_MIN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.Solver" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mapc_optimal.</span></span><span class="sig-name descname"><span class="pre">Solver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcs_data_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_snr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MAX_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_tx_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">MIN_TX_POWER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_floor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">NOISE_FLOOR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimizationType.MAX_MIN</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pricing_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PricingType.MILP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pricing_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.Solver" title="Link to this definition">¶</a></dt>
 <dd><p>The solver class coordinating the overall process of finding the optimal solution.
 It initializes the solver, sets up the network configuration, and manages the iterations.
 The optimization problem can be formulated in a few ways, e.g.:
@@ -155,10 +159,13 @@ determined in ns-3 simulations by default.</p></li>
 <li><p><strong>opt_type</strong> (<a class="reference internal" href="#mapc_optimal.OptimizationType" title="mapc_optimal.OptimizationType"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationType</span></code></a>, <em>default</em> <a class="reference internal" href="#mapc_optimal.OptimizationType.MAX_MIN" title="mapc_optimal.OptimizationType.MAX_MIN"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationType.MAX_MIN</span></code></a>) – The type of optimization problem to solve. The max min problem is solved by default.</p></li>
 <li><p><strong>max_iterations</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">100</span></code>) – The maximum number of iterations of the solver.</p></li>
 <li><p><strong>log_segments</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">10</span></code>) – The number of linear function segments used to approximate the logarithm function in proportional fairness setting.</p></li>
-<li><p><strong>epsilon</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">1e-5</span></code>) – The minimum value of the pricing objective function to continue the iterations.</p></li>
+<li><p><strong>epsilon</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">1e-4</span></code>) – The minimum value of the pricing objective function to continue the iterations, relative to the highest data rate.</p></li>
 <li><p><strong>fix_tolerance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <em>default</em> <code class="docutils literal notranslate"><span class="pre">1e-3</span></code>) – The maximum improvement of the throughput of a station (Mb/s) which is still considered as no
 improvement, i.e., the station gets its throughput fixed in the lexicographic optimization.</p></li>
 <li><p><strong>solver</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pulp.LpSolver</span></code>, <em>default</em> <code class="xref py py-class docutils literal notranslate"><span class="pre">pulp.PULP_CBC_CMD(msg=False)</span></code>) – The solver used to solve the optimization problems.</p></li>
+<li><p><strong>pricing_type</strong> (<a class="reference internal" href="#mapc_optimal.PricingType" title="mapc_optimal.PricingType"><code class="xref py py-class docutils literal notranslate"><span class="pre">PricingType</span></code></a>, <em>default</em> <a class="reference internal" href="#mapc_optimal.PricingType.MILP" title="mapc_optimal.PricingType.MILP"><code class="xref py py-class docutils literal notranslate"><span class="pre">PricingType.MILP</span></code></a>) – The method solving the pricing problem: the MILP model or tabu search.</p></li>
+<li><p><strong>pricing_kwargs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>, <em>default</em> <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>) – The arguments of the selected pricing method, i.e., of <a class="reference internal" href="tabu/index.html#mapc_optimal.tabu.TabuPricing" title="mapc_optimal.tabu.TabuPricing"><code class="xref py py-class docutils literal notranslate"><span class="pre">mapc_optimal.tabu.TabuPricing</span></code></a>
+with PricingType.TABU. The network parameters are shared by both methods.</p></li>
 </ul>
 </dd>
 </dl>
@@ -219,7 +226,7 @@ improvement, i.e., the station gets its throughput fixed in the lexicographic op
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mapc_optimal.Solver.epsilon">
-<span class="sig-name descname"><span class="pre">epsilon</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-05</span></span><a class="headerlink" href="#mapc_optimal.Solver.epsilon" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">epsilon</span></span><a class="headerlink" href="#mapc_optimal.Solver.epsilon" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -303,7 +310,7 @@ It can be useful to check if the solver has converged.</p>
 </div>
 </li>
 <li><p>name lookup:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Color</span><span class="p">[</span><span class="s1">&#39;RED&#39;</span><span class="p">]</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Color</span><span class="p">[</span><span class="s1">'RED'</span><span class="p">]</span>
 <span class="go">&lt;Color.RED: 1&gt;</span>
 </pre></div>
 </div>
@@ -343,6 +350,61 @@ attributes – see the documentation for details.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="mapc_optimal.OptimizationType.LEXICOGRAPHIC">
 <span class="sig-name descname"><span class="pre">LEXICOGRAPHIC</span></span><a class="headerlink" href="#mapc_optimal.OptimizationType.LEXICOGRAPHIC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="mapc_optimal.PricingType">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">mapc_optimal.</span></span><span class="sig-name descname"><span class="pre">PricingType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mapc_optimal.PricingType" title="Link to this definition">¶</a></dt>
+<dd><p>Create a collection of name/value pairs.</p>
+<p>Example enumeration:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">class</span><span class="w"> </span><span class="nc">Color</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">RED</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">... </span>    <span class="n">BLUE</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">... </span>    <span class="n">GREEN</span> <span class="o">=</span> <span class="mi">3</span>
+</pre></div>
+</div>
+<p>Access them by:</p>
+<ul>
+<li><p>attribute access:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Color</span><span class="o">.</span><span class="n">RED</span>
+<span class="go">&lt;Color.RED: 1&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p>value lookup:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Color</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&lt;Color.RED: 1&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p>name lookup:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Color</span><span class="p">[</span><span class="s1">'RED'</span><span class="p">]</span>
+<span class="go">&lt;Color.RED: 1&gt;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Enumerations can be iterated over, and know how many members they have:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span>
+<span class="go">3</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">Color</span><span class="p">)</span>
+<span class="go">[&lt;Color.RED: 1&gt;, &lt;Color.BLUE: 2&gt;, &lt;Color.GREEN: 3&gt;]</span>
+</pre></div>
+</div>
+<p>Methods can be added to enumerations, and members can have their own
+attributes – see the documentation for details.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mapc_optimal.PricingType.MILP">
+<span class="sig-name descname"><span class="pre">MILP</span></span><a class="headerlink" href="#mapc_optimal.PricingType.MILP" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="mapc_optimal.PricingType.TABU">
+<span class="sig-name descname"><span class="pre">TABU</span></span><a class="headerlink" href="#mapc_optimal.PricingType.TABU" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -417,6 +479,7 @@ residential TGax path loss model.</p></li>
 <li class="toctree-l4"><a class="reference internal" href="main/index.html">mapc_optimal.main</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pricing/index.html">mapc_optimal.pricing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="solver/index.html">mapc_optimal.solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tabu/index.html">mapc_optimal.tabu</a></li>
 <li class="toctree-l4"><a class="reference internal" href="utils/index.html">mapc_optimal.utils</a></li>
 </ul>
 </li>
@@ -450,6 +513,11 @@ residential TGax path loss model.</p></li>
 <li class="toctree-l5"><a class="reference internal" href="#mapc_optimal.OptimizationType.MAX_MIN_BASELINE"><code class="docutils literal notranslate"><span class="pre">OptimizationType.MAX_MIN_BASELINE</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#mapc_optimal.OptimizationType.PROPORTIONAL"><code class="docutils literal notranslate"><span class="pre">OptimizationType.PROPORTIONAL</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#mapc_optimal.OptimizationType.LEXICOGRAPHIC"><code class="docutils literal notranslate"><span class="pre">OptimizationType.LEXICOGRAPHIC</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="#mapc_optimal.PricingType"><code class="docutils literal notranslate"><span class="pre">PricingType</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#mapc_optimal.PricingType.MILP"><code class="docutils literal notranslate"><span class="pre">PricingType.MILP</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#mapc_optimal.PricingType.TABU"><code class="docutils literal notranslate"><span class="pre">PricingType.TABU</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="#mapc_optimal.positions_to_path_loss"><code class="docutils literal notranslate"><span class="pre">positions_to_path_loss()</span></code></a></li>

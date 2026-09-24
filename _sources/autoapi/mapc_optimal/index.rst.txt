@@ -14,6 +14,7 @@ Submodules
    /autoapi/mapc_optimal/main/index
    /autoapi/mapc_optimal/pricing/index
    /autoapi/mapc_optimal/solver/index
+   /autoapi/mapc_optimal/tabu/index
    /autoapi/mapc_optimal/utils/index
 
 
@@ -24,6 +25,7 @@ Classes
 
    mapc_optimal.Solver
    mapc_optimal.OptimizationType
+   mapc_optimal.PricingType
 
 
 Functions
@@ -37,7 +39,7 @@ Functions
 Package Contents
 ----------------
 
-.. py:class:: Solver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, opt_type = OptimizationType.MAX_MIN, max_iterations = 100, log_segments = 10, epsilon = 1e-05, fix_tolerance = 0.001, solver = None)
+.. py:class:: Solver(stations, access_points, channel_width = 20, mcs_data_rates = None, min_snr = None, max_tx_power = MAX_TX_POWER, min_tx_power = MIN_TX_POWER, noise_floor = NOISE_FLOOR, opt_type = OptimizationType.MAX_MIN, max_iterations = 100, log_segments = 10, epsilon = 0.0001, fix_tolerance = 0.001, solver = None, pricing_type = PricingType.MILP, pricing_kwargs = None)
 
    The solver class coordinating the overall process of finding the optimal solution.
    It initializes the solver, sets up the network configuration, and manages the iterations.
@@ -127,13 +129,18 @@ Package Contents
    :type max_iterations: :py:class:`int`, *default* ``100``
    :param log_segments: The number of linear function segments used to approximate the logarithm function in proportional fairness setting.
    :type log_segments: :py:class:`int`, *default* ``10``
-   :param epsilon: The minimum value of the pricing objective function to continue the iterations.
-   :type epsilon: :py:class:`float`, *default* ``1e-5``
+   :param epsilon: The minimum value of the pricing objective function to continue the iterations, relative to the highest data rate.
+   :type epsilon: :py:class:`float`, *default* ``1e-4``
    :param fix_tolerance: The maximum improvement of the throughput of a station (Mb/s) which is still considered as no
                          improvement, i.e., the station gets its throughput fixed in the lexicographic optimization.
    :type fix_tolerance: :py:class:`float`, *default* ``1e-3``
    :param solver: The solver used to solve the optimization problems.
    :type solver: :py:class:`pulp.LpSolver`, *default* :py:class:`pulp.PULP_CBC_CMD(msg=False)`
+   :param pricing_type: The method solving the pricing problem: the MILP model or tabu search.
+   :type pricing_type: :py:class:`PricingType`, *default* :py:class:`PricingType.MILP`
+   :param pricing_kwargs: The arguments of the selected pricing method, i.e., of :class:`mapc_optimal.tabu.TabuPricing`
+                          with PricingType.TABU. The network parameters are shared by both methods.
+   :type pricing_kwargs: :py:class:`dict`, *default* :py:obj:`None`
 
 
    .. py:attribute:: stations
@@ -174,8 +181,6 @@ Package Contents
 
 
    .. py:attribute:: epsilon
-      :value: 1e-05
-
 
 
    .. py:attribute:: fix_tolerance
@@ -275,6 +280,54 @@ Package Contents
 
 
    .. py:attribute:: LEXICOGRAPHIC
+
+
+.. py:class:: PricingType(*args, **kwds)
+
+
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access:
+
+     >>> Color.RED
+     <Color.RED: 1>
+
+   - value lookup:
+
+     >>> Color(1)
+     <Color.RED: 1>
+
+   - name lookup:
+
+     >>> Color['RED']
+     <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+
+   .. py:attribute:: MILP
+
+
+   .. py:attribute:: TABU
 
 
 .. py:function:: positions_to_path_loss(pos, walls, path_loss_fn = tgax_path_loss)
