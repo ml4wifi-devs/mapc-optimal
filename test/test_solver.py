@@ -68,7 +68,8 @@ class SolverTestCase(unittest.TestCase):
         max_min_rates = station_rates(max_min)
         lexicographic_rates = station_rates(lexicographic)
 
-        # the worst station is the same as in the max-min optimization, but the following ones are better
-        assert lexicographic_rates[0] == max_min_rates[0]
-        assert lexicographic_rates > max_min_rates
+        # no station is worse than in the max-min optimization, up to the tolerance of fixing the stations,
+        # and the stations which are not limited by the worst ones are better
+        assert all(l > m - 1e-2 for l, m in zip(lexicographic_rates, max_min_rates))
+        assert sum(lexicographic_rates) > sum(max_min_rates)
         assert abs(sum(lexicographic['shares'].values()) - 1.) < 1e-6

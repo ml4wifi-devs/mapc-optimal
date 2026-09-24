@@ -1,4 +1,5 @@
 import warnings
+from functools import partial
 from itertools import product
 from typing import Union
 
@@ -9,7 +10,8 @@ from numpy.typing import NDArray
 from mapc_optimal.constants import DATA_RATES, MAX_TX_POWER, MIN_SNRS, MIN_TX_POWER, NOISE_FLOOR
 from mapc_optimal.main import Main
 from mapc_optimal.pricing import Pricing
-from mapc_optimal.utils import OptimizationType, dbm_to_lin, lin_to_dbm
+from mapc_optimal.tabu import TabuPricing
+from mapc_optimal.utils import OptimizationType, PricingType, db_to_lin, lin_to_dbm
 
 
 class Solver:
@@ -83,9 +85,11 @@ class Solver:
             opt_type: OptimizationType = OptimizationType.MAX_MIN,
             max_iterations: int = 100,
             log_segments: int = 10,
-            epsilon: float = 1e-5,
+            epsilon: float = 1e-4,
             fix_tolerance: float = 1e-3,
-            solver: plp.LpSolver = None
+            solver: plp.LpSolver = None,
+            pricing_type: PricingType = PricingType.MILP,
+            pricing_kwargs: dict = None
     ) -> None:
         r"""
         .. note::
@@ -125,13 +129,18 @@ class Solver:
             The maximum number of iterations of the solver.
         log_segments: int, default=10
             The number of linear function segments used to approximate the logarithm function in proportional fairness setting.
-        epsilon: float, default=1e-5
-             The minimum value of the pricing objective function to continue the iterations.
+        epsilon: float, default=1e-4
+             The minimum value of the pricing objective function to continue the iterations, relative to the highest data rate.
         fix_tolerance: float, default=1e-3
             The maximum improvement of the throughput of a station (Mb/s) which is still considered as no
             improvement, i.e., the station gets its throughput fixed in the lexicographic optimization.
         solver: pulp.LpSolver, default=pulp.PULP_CBC_CMD(msg=False)
             The solver used to solve the optimization problems.
+        pricing_type: PricingType, default=PricingType.MILP
+            The method solving the pricing problem: the MILP model or tabu search.
+        pricing_kwargs: dict, default=None
+            The arguments of the selected pricing method, i.e., of :class:`mapc_optimal.tabu.TabuPricing`
+            with PricingType.TABU. The network parameters are shared by both methods.
         """
 
         if mcs_data_rates is None:
@@ -144,14 +153,14 @@ class Solver:
         self.access_points = access_points
         self.mcs_values = range(len(mcs_data_rates))
         self.mcs_data_rates = mcs_data_rates
-        self.min_sinr = dbm_to_lin(min_snr)
-        self.max_tx_power = dbm_to_lin(max_tx_power).item()
-        self.min_tx_power = dbm_to_lin(min_tx_power).item()
-        self.noise_floor = dbm_to_lin(noise_floor).item()
+        self.min_sinr = db_to_lin(min_snr)
+        self.max_tx_power = db_to_lin(max_tx_power).item()
+        self.min_tx_power = db_to_lin(min_tx_power).item()
+        self.noise_floor = db_to_lin(noise_floor).item()
         self.opt_type = opt_type
         self.max_iterations = max_iterations
         self.log_approx = self._linearize_log(log_segments)
-        self.epsilon = epsilon
+        self.epsilon = epsilon * mcs_data_rates[-1]
         self.fix_tolerance = fix_tolerance
         self.solver = solver or plp.PULP_CBC_CMD(msg=False)
         self.M = len(stations) * mcs_data_rates[-1]  # Maximum achievable throughput
@@ -162,7 +171,15 @@ class Solver:
             solver=self.solver,
             M=self.M
         )
-        self.pricing = Pricing(
+
+        if pricing_type == PricingType.MILP:
+            pricing = Pricing
+        elif pricing_type == PricingType.TABU:
+            pricing = partial(TabuPricing, **(pricing_kwargs or {}))
+        else:
+            raise ValueError('Invalid pricing type')
+
+        self.pricing = pricing(
             mcs_values=self.mcs_values,
             mcs_data_rates=self.mcs_data_rates,
             min_sinr=self.min_sinr,
@@ -301,7 +318,7 @@ class Solver:
         """
 
         return [{
-            l: min(max(dbm_to_lin(p).item(), self.min_tx_power), self.max_tx_power)
+            l: min(max(db_to_lin(p).item(), self.min_tx_power), self.max_tx_power)
             for (a, s), p in conf.items() if (l := (f'AP_{a}', f'STA_{s}')) in links
         } for conf in configurations]
 
@@ -414,6 +431,10 @@ class Solver:
             configuration, main_result, min_rate = self._column_generation(
                 problem_data, configuration, objectives, lower_bounds, active
             )
+            # the bounds are relaxed by the tolerance, otherwise they can make the main problem
+            # numerically infeasible
+            min_rate = max(min_rate - self.fix_tolerance, 0.)
+
             if len(active) > 1:
                 best_rates = {}
 
@@ -473,7 +494,7 @@ class Solver:
         assert not self.opt_type == OptimizationType.MAX_MIN_BASELINE or baseline is not None, \
             'Baseline rates must be provided for the max-min optimization with baseline.'
 
-        path_loss = dbm_to_lin(path_loss)
+        path_loss = db_to_lin(path_loss)
         problem_data = self._generate_data(path_loss, associations)
 
         if len(problem_data['links']) == 0:
@@ -505,6 +526,7 @@ class Solver:
         result = {
             'links': {c: configuration['conf_links'][c] for c in shares},
             'link_rates': {c: configuration['conf_link_rates'][c] for c in shares},
+            'mcs': {c: configuration['conf_link_mcs'][c] for c in shares},
             'total_rates': {c: configuration['conf_total_rates'][c] for c in shares},
             'tx_power': {c: {l: lin_to_dbm(p).item() for l, p in configuration['conf_link_tx_power'][c].items()} for c in shares},
             'shares': shares

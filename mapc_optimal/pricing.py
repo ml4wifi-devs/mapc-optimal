@@ -55,9 +55,9 @@ class Pricing:
         self.opt_type = opt_type
         self.solver = solver
 
-    def _best_rate(self, path_loss: float) -> float:
+    def _best_mcs(self, path_loss: float) -> int:
         """
-        Selects the best data rate for a given node assuming no interference.
+        Selects the highest MCS for a given node assuming no interference.
 
         Parameters
         ----------
@@ -66,22 +66,21 @@ class Pricing:
 
         Returns
         -------
-        rate : float
-            Maximum possible data rate.
+        mcs : int
+            The highest MCS which can be used.
         """
 
-        mcs = (self.max_tx_power >= self.min_sinr * path_loss * self.noise_floor).sum()
-        return self.mcs_data_rates[mcs - 1]
+        return int((self.max_tx_power >= self.min_sinr * path_loss * self.noise_floor).sum()) - 1
 
-    def _conf_rate(self, link: tuple, conf: dict, link_path_loss: dict) -> float:
+    def _conf_mcs(self, link: tuple, conf: dict, link_path_loss: dict) -> int:
         """
-        Calculates the data rate of a link in a configuration where multiple links transmit simultaneously.
+        Selects the highest MCS of a link in a configuration where multiple links transmit simultaneously.
         The interference is calculated in the same way as in the pricing problem.
 
         Parameters
         ----------
         link : tuple
-            The link for which the data rate is calculated.
+            The link for which the MCS is selected.
         conf : dict
             Dictionary mapping the links of the configuration to their transmission power.
         link_path_loss : dict
@@ -89,13 +88,21 @@ class Pricing:
 
         Returns
         -------
-        rate : float
-            Data rate of the link.
+        mcs : int
+            The highest MCS which can be used, or -1 if the link cannot transmit.
         """
 
         interference = self.noise_floor + sum(p / link_path_loss[i[0], link[1]] for i, p in conf.items() if i[0] != link[0])
-        mcs = (conf[link] / link_path_loss[link] >= self.min_sinr * interference).sum()
-        return self.mcs_data_rates[mcs - 1] if mcs > 0 else 0.
+        # the 1e-6 factor is used to avoid numerical issues when the SINR is very close to the threshold
+        return int((conf[link] / link_path_loss[link] >= self.min_sinr * interference * (1. - 1e-6)).sum()) - 1
+
+    def _conf_rate(self, link: tuple, conf: dict, link_path_loss: dict) -> float:
+        """
+        Calculates the data rate of a link in a configuration where multiple links transmit simultaneously.
+        """
+
+        mcs = self._conf_mcs(link, conf, link_path_loss)
+        return self.mcs_data_rates[mcs] if mcs >= 0 else 0.
 
     def initial_configuration(self, links: list, link_path_loss: dict, configurations: list = None) -> dict:
         """
@@ -122,25 +129,29 @@ class Pricing:
         configuration['confs'] = range(1, len(links) + 1)
         configuration['conf_links'] = {c: [l] for c, l in zip(configuration['confs'], links)}
         configuration['conf_link_rates'] = {c: {} for c in configuration['confs']}
+        configuration['conf_link_mcs'] = {c: {} for c in configuration['confs']}
         configuration['conf_link_tx_power'] = {c: {} for c in configuration['confs']}
 
         for c in configuration['confs']:
             l = configuration['conf_links'][c][0]
-            configuration['conf_link_rates'][c][l] = self._best_rate(link_path_loss[l])
+            mcs = self._best_mcs(link_path_loss[l])
+            configuration['conf_link_rates'][c][l] = self.mcs_data_rates[mcs]
+            configuration['conf_link_mcs'][c][l] = mcs
             configuration['conf_link_tx_power'][c][l] = self.max_tx_power
 
         conf_num = len(links) + 1
 
         for conf in (configurations or []):
-            rates = {l: self._conf_rate(l, conf, link_path_loss) for l in conf}
-            rates = {l: r for l, r in rates.items() if r > 0}
+            mcs = {l: self._conf_mcs(l, conf, link_path_loss) for l in conf}
+            mcs = {l: m for l, m in mcs.items() if m >= 0}
 
-            if not rates:
+            if not mcs:
                 continue
 
-            configuration['conf_links'][conf_num] = list(rates)
-            configuration['conf_link_rates'][conf_num] = rates
-            configuration['conf_link_tx_power'][conf_num] = {l: conf[l] for l in rates}
+            configuration['conf_links'][conf_num] = list(mcs)
+            configuration['conf_link_rates'][conf_num] = {l: self.mcs_data_rates[m] for l, m in mcs.items()}
+            configuration['conf_link_mcs'][conf_num] = mcs
+            configuration['conf_link_tx_power'][conf_num] = {l: conf[l] for l in mcs}
             conf_num += 1
 
         configuration['confs'] = range(1, conf_num)
@@ -202,7 +213,7 @@ class Pricing:
         link_on = plp.LpVariable.dicts('link_on', links, cat=plp.LpBinary)
         link_mcs = plp.LpVariable.dicts('link_mcs', [(l, m) for l in links for m in self.mcs_values], cat=plp.LpBinary)
         link_data_rate = plp.LpVariable.dicts('link_data_rate', links, lowBound=0, cat=plp.LpContinuous)
-        link_interference = plp.LpVariable.dicts('link_interference', [(l, m) for l in links for m in self.mcs_values], lowBound=0, cat=plp.LpContinuous)
+        min_signal = plp.LpVariable.dicts('min_signal', [(l, m) for l in links for m in self.mcs_values], lowBound=0, cat=plp.LpContinuous)
 
         for s in stations:
             # station receives transmission from at most one AP
@@ -226,14 +237,14 @@ class Pricing:
                 else:
                     pricing += link_mcs[l, m] <= link_mcs[l, m - 1], f'link_mcs_{l}_{m}_c'
 
-                # interference level in link
-                pricing += link_interference[l, m] == plp.lpSum(
+                # the minimum signal level required by the MCS
+                pricing += min_signal[l, m] == plp.lpSum(
                     link_tx_power[l_i] * (self.min_sinr[m] * link_path_loss[l] / link_path_loss[link_node_a[l_i], s])
                     for l_i in links if link_node_a[l_i] != a
-                ) + self.min_sinr[m] * link_path_loss[l] * self.noise_floor, f'link_interference_{l}_{m}_c1'
+                ) + self.min_sinr[m] * link_path_loss[l] * self.noise_floor, f'min_signal_{l}_{m}_c1'
 
                 # check whether SINR is high enough for transmission with a given MCS
-                pricing += link_tx_power[l] + max_interference[l, m] * (1 - link_mcs[l, m]) >= link_interference[l, m], f'link_interference_{l}_{m}_c2'
+                pricing += link_tx_power[l] + max_interference[l, m] * (1 - link_mcs[l, m]) >= min_signal[l, m], f'min_signal_{l}_{m}_c2'
 
             # data rate obtained in link (on the basis of the switched-on MCS modes)
             pricing += link_data_rate[l] == plp.lpSum(self.mcs_rate_diff[m] * link_mcs[l, m] for m in self.mcs_values), f'link_data_rate_{l}_c'
@@ -261,6 +272,7 @@ class Pricing:
             raise ValueError('Invalid optimization type')
 
         pricing.link_on = link_on
+        pricing.link_mcs = link_mcs
         pricing.link_data_rate = link_data_rate
         pricing.link_tx_power = link_tx_power
 
@@ -274,6 +286,9 @@ class Pricing:
         configuration['confs'] = range(1, conf_num + 1)
         configuration['conf_links'][conf_num] = [l for l in links if pricing.link_on[l].varValue > 0.5]
         configuration['conf_link_rates'][conf_num] = {l: pricing.link_data_rate[l].varValue for l in configuration['conf_links'][conf_num]}
+        configuration['conf_link_mcs'][conf_num] = {
+            l: round(sum(pricing.link_mcs[l, m].varValue for m in self.mcs_values)) - 1 for l in configuration['conf_links'][conf_num]
+        }
         configuration['conf_link_tx_power'][conf_num] = {l: pricing.link_tx_power[l].varValue for l in configuration['conf_links'][conf_num]}
         configuration['conf_total_rates'][conf_num] = sum(configuration['conf_link_rates'][conf_num].values())
         configuration['conf_num'] += 1

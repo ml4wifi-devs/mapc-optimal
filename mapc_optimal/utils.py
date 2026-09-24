@@ -10,6 +10,11 @@ import numpy as np
 from numpy.typing import NDArray, ArrayLike
 
 
+class PricingType(Enum):
+    MILP = auto()
+    TABU = auto()
+
+
 class OptimizationType(Enum):
     SUM = auto()
     MAX_MIN = auto()
@@ -18,14 +23,14 @@ class OptimizationType(Enum):
     LEXICOGRAPHIC = auto()
 
 
-def dbm_to_lin(x: ArrayLike) -> NDArray:
+def db_to_lin(x: ArrayLike) -> NDArray:
     """
-    Converts dBm to a linear scale.
+    Converts a value in the logarithmic scale, i.e. a power in dBm or a ratio in dB, to a linear scale.
 
     Parameters
     ----------
     x : array_like
-        Input in dBm.
+        Input in dBm or dB.
 
     Returns
     -------

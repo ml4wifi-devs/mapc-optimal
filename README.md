@@ -95,6 +95,21 @@ configurations, rate, objectives = solver(path_loss, associations, return_object
 
 For a more detailed example, refer to the test case in `test/test_solver.py`.
 
+In large networks, the pricing problem dominates the solving time. It can be solved with tabu search instead of the
+MILP, which gives no proof of optimality, but finds close-to-optimal solutions much faster. By default, the search
+evaluates the configurations with the same channel model and SINR thresholds as the MILP. Alternatively, the rates can
+come from an `evaluator`, e.g., a network simulator, so that the solution does not depend on the analytical model:
+
+```python
+from mapc_optimal import PricingType, Solver
+
+def evaluator(confs):
+    return [{link: simulate(link, conf) for link in conf} for conf in confs]
+
+solver = Solver(stations, access_points, pricing_type=PricingType.TABU, pricing_kwargs={'evaluator': evaluator})
+configurations, rate = solver(path_loss)
+```
+
 **Note:** The underlying MILP solver can significantly affect the performance of the tool. By default, the solver 
 uses the `CBC` solver from the `PuLP` package. However, we recommend using a better solver, such as `CPLEX`.
 
@@ -106,6 +121,7 @@ The repository is structured as follows:
   - `constants.py`: Default values of the parameters used in the solver.
   - `main.py`: The formulation of the main problem solving the selection and division of configurations.
   - `pricing.py`: The pricing algorithm used to propose new configurations for the main problem.
+  - `tabu.py`: The heuristic pricing algorithm based on tabu search.
   - `solver.py`: The solver class coordinating the overall process of finding the optimal solution. It initializes the 
      solver, sets up the network configuration, and manages the iterations.
   - `utils.py`: Utility functions, including the function for calculation of the path loss from node positions using 
